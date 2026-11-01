@@ -22,7 +22,7 @@
 </div>
 
 <style>
-  blockquote { border-left: 3px solid #8b5cf6 !important; }
+  blockquote, .markdown-body blockquote { border-left: 3px solid #8b5cf6 !important; }
 </style>
 
 

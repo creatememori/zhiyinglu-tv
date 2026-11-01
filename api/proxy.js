@@ -1,28 +1,43 @@
-// Vercel Serverless Function — API 代理入口
-// 使用 Node.js 内置 fetch/Request/Response (Node 18+)
-import { handleProxy, handleImg, handleStream } from '../../worker/proxy-core.js';
+// Vercel API 中继 — 独立轻量版（不依赖 worker/）
+// Node.js 18+ 原生支持 fetch/Request/Response
 
-const handlers = { img: handleImg, stream: handleStream, proxy: handleProxy, health: handleProxy };
+const HOSTS = [
+  'bfzyapi.com','lziapi.com','ffzyapi.com','360zy.com',
+  'moguvod.com','cjapi.com','kkapi.com','mjwapicj.com',
+  'xzdst.cn','blackbox.com','libvio.com','tvapi.com',
+  'douban.com','doubanio.com','img.doubanio.com',
+  'images.weserv.nl','wsrv.nl','img.cmliussss.net'
+];
+
+function allowHost(url) {
+  try { return HOSTS.some(h => new URL(url).hostname.includes(h)); }
+  catch { return false; }
+}
 
 export default async function handler(req, res) {
-  const { pathname, searchParams } = new URL(req.url, `http://${req.headers.host}`);
-  const name = pathname.split('/').pop(); // proxy | img | stream | health
+  const u = new URL(req.url, `http://${req.headers.host}`);
+  const target = u.searchParams.get('url');
 
-  // 构造 Web Request
-  const webReq = new Request(`http://host${pathname}?${searchParams}`, {
-    method: req.method,
-    headers: Object.entries(req.headers).reduce((h, [k, v]) => { h.set(k, v); return h; }, new Headers()),
-    body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
-  });
+  // 健康检查
+  if (u.pathname === '/api/health') {
+    return res.json({ service:'Zhiyinglu API', ok:true, runtime:'vercel-node' });
+  }
 
-  const fn = handlers[name] || handleProxy;
+  if (!target) return res.status(400).json({ error:'missing_url' });
+  if (!allowHost(target)) return res.status(403).json({ error:'host_not_allowed', host:new URL(target).hostname });
+
   try {
-    const webRes = await fn(webReq, { env: process.env });
-    res.status(webRes.status);
-    webRes.headers.forEach((v, k) => res.setHeader(k, v));
-    const buf = await webRes.arrayBuffer();
+    const upstream = await fetch(target, {
+      method: req.method,
+      headers: { 'User-Agent':'Mozilla/5.0','Accept':'*/*','Referer':new URL(target).origin },
+      redirect: 'follow',
+    });
+    const buf = await upstream.arrayBuffer();
+    res.status(upstream.status);
+    upstream.headers.forEach((v,k) => { if (!['content-encoding','transfer-encoding'].includes(k.toLowerCase())) res.setHeader(k,v); });
+    res.setHeader('Access-Control-Allow-Origin','*');
     res.send(Buffer.from(buf));
-  } catch (e) {
-    res.status(502).json({ error: 'proxy_error', message: e.message });
+  } catch(e) {
+    res.status(502).json({ error:'upstream_fail', message:e.message });
   }
 }

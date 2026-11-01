@@ -33,48 +33,74 @@
 
 ## 📸 界面预览
 
+### 🏠 首页
+
 <table align="center">
   <tr>
-    <td align="center"><b>🏠 首页 · 聚合推荐</b></td>
-    <td align="center"><b>🔍 全网搜索</b></td>
-  </tr>
-  <tr>
-    <td><img src="./docs/screenshots/ui1.jpg" alt="首页聚合" /></td>
-    <td><img src="./docs/screenshots/ui2.jpg" alt="多源搜索" /></td>
+    <td><img src="./docs/screenshots/ui1.jpg" alt="首页1" /></td>
+    <td><img src="./docs/screenshots/ui2.jpg" alt="首页2" /></td>
+    <td><img src="./docs/screenshots/ui3.jpg" alt="首页3" /></td>
   </tr>
 </table>
 
 <details>
-<summary>📱 更多界面截图（点击展开）</summary>
+<summary>📱 首页更多截图（点击展开）</summary>
+<table align="center">
+  <tr>
+    <td><img src="./docs/screenshots/ui4.jpg" alt="首页4" /></td>
+    <td><img src="./docs/screenshots/ui5.jpg" alt="首页5" /></td>
+    <td><img src="./docs/screenshots/ui6.jpg" alt="首页6" /></td>
+  </tr>
+</table>
+</details>
+
+### 🔍 搜索
 
 <table align="center">
   <tr>
-    <td align="center"><b>📂 分类浏览</b></td>
-    <td align="center"><b>📖 影片详情</b></td>
-  </tr>
-  <tr>
-    <td><img src="./docs/screenshots/ui3.jpg" alt="分类浏览" /></td>
-    <td><img src="./docs/screenshots/ui5.jpg" alt="影片详情" /></td>
-  </tr>
-  <tr>
-    <td align="center"><b>🎬 播放页面</b></td>
-    <td align="center"><b>📡 数据源管理</b></td>
-  </tr>
-  <tr>
-    <td><img src="./docs/screenshots/ui4.jpg" alt="播放页面" /></td>
-    <td><img src="./docs/screenshots/ui6.jpg" alt="数据源管理" /></td>
-  </tr>
-  <tr>
-    <td align="center"><b>⚙️ 设置与迁移</b></td>
-    <td align="center"><b>📺 电视直播</b></td>
-  </tr>
-  <tr>
-    <td><img src="./docs/screenshots/ui9.jpg" alt="设置与迁移" /></td>
-    <td><img src="./docs/screenshots/ui10.jpg" alt="电视直播" /></td>
+    <td><img src="./docs/screenshots/ui7.jpg" alt="搜索" /></td>
+    <td><img src="./docs/screenshots/ui8.jpg" alt="搜索结果" /></td>
   </tr>
 </table>
 
-</details>
+### 📂 分类
+
+<table align="center">
+  <tr><td><img src="./docs/screenshots/ui9.jpg" alt="分类浏览" /></td></tr>
+</table>
+
+### ⚡ 在线解析
+
+<table align="center">
+  <tr><td><img src="./docs/screenshots/ui10.jpg" alt="在线解析" /></td></tr>
+</table>
+
+### 📖 观看历史
+
+<table align="center">
+  <tr><td><img src="./docs/screenshots/ui11.jpg" alt="观看历史" /></td></tr>
+</table>
+
+### 📡 数据源管理
+
+<table align="center">
+  <tr><td><img src="./docs/screenshots/ui12.jpg" alt="数据源管理" /></td></tr>
+</table>
+
+### 🎨 UI 自定义
+
+<table align="center">
+  <tr><td><img src="./docs/screenshots/ui13.jpg" alt="UI自定义" /></td></tr>
+</table>
+
+### ⚙️ 设置
+
+<table align="center">
+  <tr>
+    <td><img src="./docs/screenshots/ui14.jpg" alt="设置1" /></td>
+    <td><img src="./docs/screenshots/ui15.jpg" alt="设置2" /></td>
+  </tr>
+</table>
 
 ## ✨ 功能特性
 
@@ -97,13 +123,12 @@
 - **ArtPlayer 5** · hls.js 驱动，m3u8/mp4/flv 全支持
 - **自定义紫色进度条** · 点击跳转 · 拖拽滑块 · 悬浮时间预览
 - **片头片尾跳过** · 按片名独立记忆
-- **断点续播** · IndexedDB 持久化，刷新不丢进度
+- **断点续播** · IndexedDB 持久化
 - **自动连播** · 剧集结束自动跳下一集
-- **云解析** · VIP 平台链接自动走解析线路
 
-### 📡 数据源管理
+### 📡 数据源
 
-- 14 个内置 API 源，一键体检并行探测延迟
+- 14 个内置 API 源，一键体检并行探测
 - 健康评分排序，自动停用失效源
 - 支持自定义源 + 配置导入导出
 

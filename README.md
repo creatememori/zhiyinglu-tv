@@ -35,40 +35,40 @@
 
 ### 🏠 首页
 
-<img src="./docs/screenshots/ui1.jpg" width="240" /> <img src="./docs/screenshots/ui2.jpg" width="240" /> <img src="./docs/screenshots/ui3.jpg" width="240" />
+<img src="./docs/screenshots/ui1.jpg" width="300" /> <img src="./docs/screenshots/ui2.jpg" width="300" /> <img src="./docs/screenshots/ui3.jpg" width="300" />
 
 <details>
 <summary>📱 首页更多截图</summary>
-<img src="./docs/screenshots/ui4.jpg" width="240" /> <img src="./docs/screenshots/ui5.jpg" width="240" /> <img src="./docs/screenshots/ui6.jpg" width="240" />
+<img src="./docs/screenshots/ui4.jpg" width="300" /> <img src="./docs/screenshots/ui5.jpg" width="300" /> <img src="./docs/screenshots/ui6.jpg" width="300" />
 </details>
 
 ### 🔍 搜索
 
-<img src="./docs/screenshots/ui7.jpg" width="280" />
+<img src="./docs/screenshots/ui7.jpg" width="480" />
 
 ### 📂 分类
 
-<img src="./docs/screenshots/ui8.jpg" width="280" /> <img src="./docs/screenshots/ui9.jpg" width="280" />
+<img src="./docs/screenshots/ui8.jpg" width="480" /> <img src="./docs/screenshots/ui9.jpg" width="480" />
 
 ### ⚡ 在线解析
 
-<img src="./docs/screenshots/ui10.jpg" width="280" />
+<img src="./docs/screenshots/ui10.jpg" width="480" />
 
 ### 📖 观看历史
 
-<img src="./docs/screenshots/ui11.jpg" width="280" />
+<img src="./docs/screenshots/ui11.jpg" width="480" />
 
 ### 📡 数据源管理
 
-<img src="./docs/screenshots/ui12.jpg" width="280" />
+<img src="./docs/screenshots/ui12.jpg" width="480" />
 
 ### 🎨 UI 自定义
 
-<img src="./docs/screenshots/ui13.jpg" width="280" />
+<img src="./docs/screenshots/ui13.jpg" width="480" />
 
 ### ⚙️ 设置
 
-<img src="./docs/screenshots/ui14.jpg" width="280" /> <img src="./docs/screenshots/ui15.jpg" width="280" />
+<img src="./docs/screenshots/ui14.jpg" width="480" /> <img src="./docs/screenshots/ui15.jpg" width="480" />
 
 ## ✨ 功能特性
 

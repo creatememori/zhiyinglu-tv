@@ -35,72 +35,40 @@
 
 ### 🏠 首页
 
-<table align="center">
-  <tr>
-    <td><img src="./docs/screenshots/ui1.jpg" alt="首页1" /></td>
-    <td><img src="./docs/screenshots/ui2.jpg" alt="首页2" /></td>
-    <td><img src="./docs/screenshots/ui3.jpg" alt="首页3" /></td>
-  </tr>
-</table>
+<img src="./docs/screenshots/ui1.jpg" width="240" /> <img src="./docs/screenshots/ui2.jpg" width="240" /> <img src="./docs/screenshots/ui3.jpg" width="240" />
 
 <details>
-<summary>📱 首页更多截图（点击展开）</summary>
-<table align="center">
-  <tr>
-    <td><img src="./docs/screenshots/ui4.jpg" alt="首页4" /></td>
-    <td><img src="./docs/screenshots/ui5.jpg" alt="首页5" /></td>
-    <td><img src="./docs/screenshots/ui6.jpg" alt="首页6" /></td>
-  </tr>
-</table>
+<summary>📱 首页更多截图</summary>
+<img src="./docs/screenshots/ui4.jpg" width="240" /> <img src="./docs/screenshots/ui5.jpg" width="240" /> <img src="./docs/screenshots/ui6.jpg" width="240" />
 </details>
 
 ### 🔍 搜索
 
-<table align="center">
-  <tr>
-    <td><img src="./docs/screenshots/ui7.jpg" alt="搜索" /></td>
-    <td><img src="./docs/screenshots/ui8.jpg" alt="搜索结果" /></td>
-  </tr>
-</table>
+<img src="./docs/screenshots/ui7.jpg" width="280" />
 
 ### 📂 分类
 
-<table align="center">
-  <tr><td><img src="./docs/screenshots/ui9.jpg" alt="分类浏览" /></td></tr>
-</table>
+<img src="./docs/screenshots/ui8.jpg" width="280" /> <img src="./docs/screenshots/ui9.jpg" width="280" />
 
 ### ⚡ 在线解析
 
-<table align="center">
-  <tr><td><img src="./docs/screenshots/ui10.jpg" alt="在线解析" /></td></tr>
-</table>
+<img src="./docs/screenshots/ui10.jpg" width="280" />
 
 ### 📖 观看历史
 
-<table align="center">
-  <tr><td><img src="./docs/screenshots/ui11.jpg" alt="观看历史" /></td></tr>
-</table>
+<img src="./docs/screenshots/ui11.jpg" width="280" />
 
 ### 📡 数据源管理
 
-<table align="center">
-  <tr><td><img src="./docs/screenshots/ui12.jpg" alt="数据源管理" /></td></tr>
-</table>
+<img src="./docs/screenshots/ui12.jpg" width="280" />
 
 ### 🎨 UI 自定义
 
-<table align="center">
-  <tr><td><img src="./docs/screenshots/ui13.jpg" alt="UI自定义" /></td></tr>
-</table>
+<img src="./docs/screenshots/ui13.jpg" width="280" />
 
 ### ⚙️ 设置
 
-<table align="center">
-  <tr>
-    <td><img src="./docs/screenshots/ui14.jpg" alt="设置1" /></td>
-    <td><img src="./docs/screenshots/ui15.jpg" alt="设置2" /></td>
-  </tr>
-</table>
+<img src="./docs/screenshots/ui14.jpg" width="280" /> <img src="./docs/screenshots/ui15.jpg" width="280" />
 
 ## ✨ 功能特性
 

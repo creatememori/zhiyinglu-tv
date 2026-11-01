@@ -25,10 +25,8 @@
 
 📖 **Readme:** [简体中文](README.md) | [English](README.en.md)
 
-<blockquote style="border-left:4px solid #8b5cf6;padding:8px 16px;margin:16px 0;background:rgba(139,92,246,.06);border-radius:0 8px 8px 0">
-<b>💡 TIP</b><br>
-知影录是一款<b>纯前端影视聚合 SPA</b>，不依赖任何后端服务。内置 14 个 API 源，采用原生 ES Module 架构驱动多源并行搜索引擎，格式探测 → 双协议解析 → 字段归一 → 指纹去重全流程浏览器端完成。<b>零服务器，打开即用。</b>
-</blockquote>
+> [!TIP]
+> 知影录是一款**纯前端影视聚合 SPA**，不依赖任何后端服务。内置 14 个 API 源，采用原生 ES Module 架构驱动多源并行搜索引擎，格式探测 → 双协议解析 → 字段归一 → 指纹去重全流程浏览器端完成。**零服务器，打开即用。**
 
 <blockquote style="border-left:3px solid #8b5cf6;padding:0 1em;margin:16px 0">
 🦾 <span style="color:#8b5cf6"><b>纯前端架构</b></span> — 不依赖 React / Vue / jQuery，原生 ES Module 自主驱动，<b>无后端，浏览器即引擎</b>

@@ -25,11 +25,36 @@
 
 📖 **Readme:** [简体中文](README.md) | [English](README.en.md)
 
-⚡ **开箱即用** · 14 个内置 API 源，零配置上手  
-🎬 **全源聚合** · 并行搜索 + 指纹去重 + 命中即播  
-📺 **流畅播放** · ArtPlayer 5 + hls.js + 自定义紫色进度条  
-🎨 **暗色毛玻璃** · 4 种主题色 · 液态玻璃设计  
-📱 **PWA 离线壳** · 可安装到主屏
+<table align="center">
+  <tr>
+    <td align="center" width="33%">
+      <b>⚡ 开箱即用</b><br>
+      <sub>内置 14 个 API 源<br>8 个目录参考 · 9 个云解析源<br>无需手动导入，即开即用</sub>
+    </td>
+    <td align="center" width="33%">
+      <b>🎬 全源聚合</b><br>
+      <sub>最多 4 源并发搜索<br>片名指纹去重算法<br>先到先显逐源增量渲染</sub>
+    </td>
+    <td align="center" width="33%">
+      <b>📺 流畅播放</b><br>
+      <sub>ArtPlayer 5 + hls.js 驱动<br>自定义紫色进度条组件<br>片头尾跳过 · 断点续播</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <b>🎨 液态毛玻璃</b><br>
+      <sub>4 种主题色一键切换<br>高斯模糊 + 旋转渐变边框<br>暗色玻璃质感设计系统</sub>
+    </td>
+    <td align="center">
+      <b>📱 PWA 离线壳</b><br>
+      <sub>Service Worker 缓存<br>可安装到桌面/主屏<br>接近原生应用体验</sub>
+    </td>
+    <td align="center">
+      <b>🔧 配置迁移</b><br>
+      <sub>JSON/Base58 双向互导<br>历史+进度+设置全量迁移<br>配置文件/订阅链接兼容</sub>
+    </td>
+  </tr>
+</table>
 
 ## 📸 界面预览
 

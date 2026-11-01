@@ -1,4 +1,3 @@
-// Vercel 健康检查
-export default function handler(req, res) {
-  res.json({ service:'Zhiyinglu API', ok:true, runtime:'vercel-node', timestamp:new Date().toISOString() });
-}
+// 委托到 proxy.js（共用同一份白名单和逻辑）
+import handler from './proxy.js';
+export default handler;

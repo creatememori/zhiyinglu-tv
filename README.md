@@ -28,30 +28,30 @@
 <table align="center">
   <tr>
     <td align="center" width="33%">
-      <b>⚡ 开箱即用</b><br>
-      <sub>内置 14 个 API 源<br>8 个目录参考 · 9 个云解析源<br>无需手动导入，即开即用</sub>
+      <b>🦾 纯前端架构</b><br>
+      <sub>不依赖 React / Vue / jQuery<br>原生 ES Module 自主驱动<br>无后端，浏览器即引擎</sub>
     </td>
     <td align="center" width="33%">
-      <b>🎬 全源聚合</b><br>
-      <sub>最多 4 源并发搜索<br>片名指纹去重算法<br>先到先显逐源增量渲染</sub>
+      <b>⚡ 多源并行引擎</b><br>
+      <sub>14 源并发聚合 + 指纹去重<br>格式探测 → 双协议解析 → 字段归一<br>先到先显，逐源增量渲染</sub>
     </td>
     <td align="center" width="33%">
-      <b>📺 流畅播放</b><br>
-      <sub>ArtPlayer 5 + hls.js 驱动<br>自定义紫色进度条组件<br>片头尾跳过 · 断点续播</sub>
+      <b>🎯 命中即播</b><br>
+      <sub>搜索命中直接出播放线路<br>无需中转详情页<br>域名级 CDN 同源故障跳过</sub>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <b>🎨 液态毛玻璃</b><br>
-      <sub>4 种主题色一键切换<br>高斯模糊 + 旋转渐变边框<br>暗色玻璃质感设计系统</sub>
+      <b>🖥️ 服务端级中继</b><br>
+      <sub>同域 API 代理解决 CORS 封锁<br>Worker singleflight 请求合并<br>Cloudflare / Vercel 双平台兼容</sub>
     </td>
     <td align="center">
-      <b>📱 PWA 离线壳</b><br>
-      <sub>Service Worker 缓存<br>可安装到桌面/主屏<br>接近原生应用体验</sub>
+      <b>🧠 智能封面链</b><br>
+      <sub>原图 → 跨源海报池 → CDN 镜像<br>豆瓣 / Bangumi / wmdb 三路兜底<br>并行竞速 + 5 秒看门狗出图</sub>
     </td>
     <td align="center">
-      <b>🔧 配置迁移</b><br>
-      <sub>JSON/Base58 双向互导<br>历史+进度+设置全量迁移<br>配置文件/订阅链接兼容</sub>
+      <b>📦 全栈浏览器化</b><br>
+      <sub>IndexedDB 持久化全部数据<br>PWA 离线壳 + SWR 缓存策略<br>零服务器，打开即用</sub>
     </td>
   </tr>
 </table>

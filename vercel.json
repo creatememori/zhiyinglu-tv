@@ -1,16 +1,15 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "installCommand": "npm install",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Referrer-Policy", "value": "no-referrer" },
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
+        { "key": "Referrer-Policy", "value": "no-referrer" }
       ]
     }
   ]

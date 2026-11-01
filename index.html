@@ -15,18 +15,12 @@
   <link rel="icon" href="./logo-bai.png">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./logo-bai.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- V35 封面镜像预连接：直连 + weserv/wsrv 图片 CDN，首屏封面加速 -->
   <link rel="preconnect" href="https://images.weserv.nl">
   <link rel="preconnect" href="https://wsrv.nl">
   <link rel="preconnect" href="https://img.doubanio.cmliussss.net">
   <!-- V14：字体 CSS 非阻塞加载（filamentgroup 的 media 切换技巧）。
-       同步 stylesheet 是 render-blocking；fonts.googleapis.com 在部分网络下
        缓慢或不可达时会直接拖住首屏。系统字体栈先行渲染，字体就绪后自动替换。 -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
   <style>/* 首屏防白闪 */
     html,body{background:#000;color:#f5f5f7;margin:0}
     #boot{position:fixed;inset:0;display:grid;place-items:center;font:600 14px/1.8 system-ui;color:#8e8e99;background:#030304}

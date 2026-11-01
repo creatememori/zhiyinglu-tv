@@ -25,36 +25,17 @@
 
 📖 **Readme:** [简体中文](README.md) | [English](README.en.md)
 
-<table align="center">
-  <tr>
-    <td align="center" width="33%">
-      <b>🦾 纯前端架构</b><br>
-      <sub>不依赖 React / Vue / jQuery<br>原生 ES Module 自主驱动<br>无后端，浏览器即引擎</sub>
-    </td>
-    <td align="center" width="33%">
-      <b>⚡ 多源并行引擎</b><br>
-      <sub>14 源并发聚合 + 指纹去重<br>格式探测 → 双协议解析 → 字段归一<br>先到先显，逐源增量渲染</sub>
-    </td>
-    <td align="center" width="33%">
-      <b>🎯 命中即播</b><br>
-      <sub>搜索命中直接出播放线路<br>无需中转详情页<br>域名级 CDN 同源故障跳过</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <b>🖥️ 服务端级中继</b><br>
-      <sub>同域 API 代理解决 CORS 封锁<br>Worker singleflight 请求合并<br>Cloudflare / Vercel 双平台兼容</sub>
-    </td>
-    <td align="center">
-      <b>🧠 智能封面链</b><br>
-      <sub>原图 → 跨源海报池 → CDN 镜像<br>豆瓣 / Bangumi / wmdb 三路兜底<br>并行竞速 + 5 秒看门狗出图</sub>
-    </td>
-    <td align="center">
-      <b>📦 全栈浏览器化</b><br>
-      <sub>IndexedDB 持久化全部数据<br>PWA 离线壳 + SWR 缓存策略<br>零服务器，打开即用</sub>
-    </td>
-  </tr>
-</table>
+> 🦾 <span style="color:#8b5cf6">**纯前端架构**</span> — 不依赖 React / Vue / jQuery，原生 ES Module 自主驱动，**无后端，浏览器即引擎**
+
+> ⚡ <span style="color:#d946ef">**多源并行引擎**</span> — 14 源并发聚合 · 格式探测 → 双协议解析 → 字段归一 · **先到先显，逐源增量渲染**
+
+> 🎯 <span style="color:#8b5cf6">**命中即播**</span> — 搜索命中直接出播放线路，无需中转详情页，域名级 CDN 同源故障自动跳过
+
+> 🖥️ <span style="color:#d946ef">**服务端级中继**</span> — 同域 API 代理解决 CORS 封锁 · Worker singleflight 请求合并 · Cloudflare / Vercel 双平台兼容
+
+> 🧠 <span style="color:#8b5cf6">**智能封面链**</span> — 原图 → 跨源海报池 → CDN 镜像 · 豆瓣 / Bangumi / wmdb 三路兜底 · 并行竞速 + 看门狗出图
+
+> 📦 <span style="color:#d946ef">**全栈浏览器化**</span> — IndexedDB 持久化全部数据 · PWA 离线壳 + SWR 缓存 · **零服务器，打开即用**
 
 ## 📸 界面预览
 

@@ -21,26 +21,33 @@
 
 </div>
 
-<style>
-  blockquote, .markdown-body blockquote { border-left: 3px solid #8b5cf6 !important; }
-</style>
-
-
 ---
 
 📖 **Readme:** [简体中文](README.md) | [English](README.en.md)
 
-> 🦾 <span style="color:#8b5cf6">**纯前端架构**</span> — 不依赖 React / Vue / jQuery，原生 ES Module 自主驱动，**无后端，浏览器即引擎**
+<blockquote style="border-left:3px solid #8b5cf6;padding:0 1em;margin:16px 0">
+🦾 <span style="color:#8b5cf6"><b>纯前端架构</b></span> — 不依赖 React / Vue / jQuery，原生 ES Module 自主驱动，<b>无后端，浏览器即引擎</b>
+</blockquote>
 
-> ⚡ <span style="color:#d946ef">**多源并行引擎**</span> — 14 源并发聚合 · 格式探测 → 双协议解析 → 字段归一 · **先到先显，逐源增量渲染**
+<blockquote style="border-left:3px solid #d946ef;padding:0 1em;margin:16px 0">
+⚡ <span style="color:#d946ef"><b>多源并行引擎</b></span> — 14 源并发聚合 · 格式探测 → 双协议解析 → 字段归一 · <b>先到先显，逐源增量渲染</b>
+</blockquote>
 
-> 🎯 <span style="color:#8b5cf6">**命中即播**</span> — 搜索命中直接出播放线路，无需中转详情页，域名级 CDN 同源故障自动跳过
+<blockquote style="border-left:3px solid #8b5cf6;padding:0 1em;margin:16px 0">
+🎯 <span style="color:#8b5cf6"><b>命中即播</b></span> — 搜索命中直接出播放线路，无需中转详情页，域名级 CDN 同源故障自动跳过
+</blockquote>
 
-> 🖥️ <span style="color:#d946ef">**服务端级中继**</span> — 同域 API 代理解决 CORS 封锁 · Worker singleflight 请求合并 · Cloudflare / Vercel 双平台兼容
+<blockquote style="border-left:3px solid #d946ef;padding:0 1em;margin:16px 0">
+🖥️ <span style="color:#d946ef"><b>服务端级中继</b></span> — 同域 API 代理解决 CORS 封锁 · Worker singleflight 请求合并 · Cloudflare / Vercel 双平台兼容
+</blockquote>
 
-> 🧠 <span style="color:#8b5cf6">**智能封面链**</span> — 原图 → 跨源海报池 → CDN 镜像 · 豆瓣 / Bangumi / wmdb 三路兜底 · 并行竞速 + 看门狗出图
+<blockquote style="border-left:3px solid #8b5cf6;padding:0 1em;margin:16px 0">
+🧠 <span style="color:#8b5cf6"><b>智能封面链</b></span> — 原图 → 跨源海报池 → CDN 镜像 · 豆瓣 / Bangumi / wmdb 三路兜底 · 并行竞速 + 看门狗出图
+</blockquote>
 
-> 📦 <span style="color:#d946ef">**全栈浏览器化**</span> — IndexedDB 持久化全部数据 · PWA 离线壳 + SWR 缓存 · **零服务器，打开即用**
+<blockquote style="border-left:3px solid #d946ef;padding:0 1em;margin:16px 0">
+📦 <span style="color:#d946ef"><b>全栈浏览器化</b></span> — IndexedDB 持久化全部数据 · PWA 离线壳 + SWR 缓存 · <b>零服务器，打开即用</b>
+</blockquote>
 
 ## 📸 界面预览
 

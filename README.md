@@ -21,6 +21,11 @@
 
 </div>
 
+<style>
+  blockquote { border-left: 3px solid #8b5cf6 !important; }
+</style>
+
+
 ---
 
 📖 **Readme:** [简体中文](README.md) | [English](README.en.md)

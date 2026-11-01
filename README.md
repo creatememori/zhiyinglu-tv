@@ -51,19 +51,38 @@
 
 ## 📸 界面预览
 
-🏠 **首页**<br>
-<img src="./docs/screenshots/ui1.jpg" width="32%" /> <img src="./docs/screenshots/ui2.jpg" width="32%" /> <img src="./docs/screenshots/ui3.jpg" width="32%" />
-<details><summary><b>展开更多</b></summary>
-<img src="./docs/screenshots/ui4.jpg" width="32%" /> <img src="./docs/screenshots/ui5.jpg" width="32%" /> <img src="./docs/screenshots/ui6.jpg" width="32%" />
-</details>
+| 🏠 首页 | 🏠 首页 |
+|---|---|
+| <img src="./docs/screenshots/ui1.jpg" width="100%" /> | <img src="./docs/screenshots/ui2.jpg" width="100%" /> |
+| <img src="./docs/screenshots/ui3.jpg" width="100%" /> | <img src="./docs/screenshots/ui4.jpg" width="100%" /> |
 
-🔍 **搜索** <img src="./docs/screenshots/ui7.jpg" width="21%" />
-📂 **分类** <img src="./docs/screenshots/ui8.jpg" width="21%" /> <img src="./docs/screenshots/ui9.jpg" width="21%" />
-⚡ **解析** <img src="./docs/screenshots/ui10.jpg" width="21%" />
-📖 **历史** <img src="./docs/screenshots/ui11.jpg" width="21%" />
-📡 **数据源** <img src="./docs/screenshots/ui12.jpg" width="21%" />
-🎨 **自定义** <img src="./docs/screenshots/ui13.jpg" width="21%" />
-⚙️ **设置** <img src="./docs/screenshots/ui14.jpg" width="21%" /> <img src="./docs/screenshots/ui15.jpg" width="21%" />
+<details><summary><b>📱 展开更多截图</b></summary>
+
+| 🏠 首页 | 🏠 首页 |
+|---|---|
+| <img src="./docs/screenshots/ui5.jpg" width="100%" /> | <img src="./docs/screenshots/ui6.jpg" width="100%" /> |
+
+| 🔍 搜索 | 📂 分类 |
+|---|---|
+| <img src="./docs/screenshots/ui7.jpg" width="100%" /> | <img src="./docs/screenshots/ui8.jpg" width="100%" /> |
+
+| 📂 分类 | ⚡ 在线解析 |
+|---|---|
+| <img src="./docs/screenshots/ui9.jpg" width="100%" /> | <img src="./docs/screenshots/ui10.jpg" width="100%" /> |
+
+| 📖 观看历史 | 📡 数据源管理 |
+|---|---|
+| <img src="./docs/screenshots/ui11.jpg" width="100%" /> | <img src="./docs/screenshots/ui12.jpg" width="100%" /> |
+
+| 🎨 UI 自定义 | ⚙️ 设置 |
+|---|---|
+| <img src="./docs/screenshots/ui13.jpg" width="100%" /> | <img src="./docs/screenshots/ui14.jpg" width="100%" /> |
+
+| ⚙️ 设置 | |
+|---|---|
+| <img src="./docs/screenshots/ui15.jpg" width="100%" /> | |
+
+</details>
 
 ## ✨ 功能特性
 

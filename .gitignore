@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.tar.gz
+*.zip
+package-lock.json
+.DS_Store
+.npmrc

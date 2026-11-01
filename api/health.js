@@ -1,9 +1,6 @@
+export const runtime = 'edge';
 import { handleProxy } from './lib/proxy-core.js';
-
-export default async function handler(req, res) {
-  const url = new URL('/api/health', `https://${req.headers.host}`);
-  const request = new Request(url.href, { method: 'GET' });
-  const context = { request, env: process.env };
-  const response = await handleProxy(request, context);
-  res.status(response.status).json(await response.json());
+export default async function handler(request) {
+  const healthReq = new Request(new URL('/api/health', request.url), { method: 'GET' });
+  return handleProxy(healthReq, { env: {} });
 }

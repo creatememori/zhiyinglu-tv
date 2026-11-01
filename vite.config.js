@@ -1,37 +1,32 @@
 import { defineConfig } from 'vite';
-import { handleProxy, handleImg, handleStream } from './worker/proxy-core.js';
 
-/**
- * 开发态同域中继：Vite dev 默认没有 /api/proxy、/api/img、/api/health，
- * 而采集源均无 CORS，浏览器直连会被拦截导致首页空。这里用与生产
- * （Cloudflare Pages Functions）完全相同的 proxy-core 承接这三个路由，
- * 使 `npm run dev` 也能真实回源、与线上行为一致。
- */
 function relayPlugin() {
   return {
-    name: 'creatememori-relay',
+    name: 'zhiyinglu-relay',
     configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        try {
-          const u = new URL(req.url, 'http://localhost');
-          if (u.pathname === '/api/proxy' || u.pathname === '/api/health' || u.pathname === '/api/img' || u.pathname === '/api/stream') {
-            const webReq = new Request(u.href, { method: req.method, headers: req.headers });
-            const handler = u.pathname === '/api/img' ? handleImg : u.pathname === '/api/stream' ? handleStream : handleProxy;
-            Promise.resolve(
-              handler(webReq, {})
-            ).then(async (webRes) => {
-              res.statusCode = webRes.status;
-              for (const [k, v] of webRes.headers) res.setHeader(k, v);
-              res.end(Buffer.from(await webRes.arrayBuffer()));
-            }).catch((e) => {
-              res.statusCode = 500;
-              res.setHeader('content-type', 'application/json; charset=utf-8');
-              res.end(JSON.stringify({ error: 'internal_error', message: String(e?.message || e) }));
-            });
-            return;
-          }
-        } catch { /* 交给 next 处理 */ }
-        next();
+      // 动态导入：仅 dev server 需要，不影响 build
+      import('./worker/proxy-core.js').then(({ handleProxy, handleImg, handleStream }) => {
+        server.middlewares.use((req, res, next) => {
+          try {
+            const u = new URL(req.url, 'http://localhost');
+            if (u.pathname === '/api/proxy' || u.pathname === '/api/health' || u.pathname === '/api/img' || u.pathname === '/api/stream') {
+              const webReq = new Request(u.href, { method: req.method, headers: req.headers });
+              const handler = u.pathname === '/api/img' ? handleImg : u.pathname === '/api/stream' ? handleStream : handleProxy;
+              Promise.resolve(handler(webReq, {}))
+                .then(async (webRes) => {
+                  res.statusCode = webRes.status;
+                  for (const [k, v] of webRes.headers) res.setHeader(k, v);
+                  res.end(Buffer.from(await webRes.arrayBuffer()));
+                }).catch((e) => {
+                  res.statusCode = 500;
+                  res.setHeader('content-type', 'application/json; charset=utf-8');
+                  res.end(JSON.stringify({ error: String(e?.message || 'internal') }));
+                });
+              return;
+            }
+          } catch {}
+          next();
+        });
       });
     }
   };

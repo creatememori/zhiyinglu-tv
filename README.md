@@ -15,6 +15,10 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/creatememori)
 [![QQ](https://img.shields.io/badge/QQ群-661816585-8b5cf6?logo=tencentqq)](https://qm.qq.com/q/creatememori)
+[![爱发电](https://img.shields.io/badge/爱发电-支持作者-ff69b4.svg)](https://ifdian.net/a/creatememori)
+
+🖥️ [**在线预览**](https://tv-eosin-five.vercel.app/)  
+<sub>⚠️ 部署于 Vercel（海外平台），部分国内 API 源可能被屏蔽，封面/数据加载偶有不全。完整功能请自行部署至国内 VPS。</sub>
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/creatememori/zhiyinglu-tv)
 [![Deploy to Cloudflare](https://img.shields.io/badge/Deploy-CF%20Pages-F6821F?logo=cloudflare)](https://dash.cloudflare.com/)

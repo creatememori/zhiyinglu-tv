@@ -14,7 +14,7 @@
 ![License](https://img.shields.io/github/license/creatememori/zhiyinglu-tv)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/creatememori)
-[![QQ](https://img.shields.io/badge/QQ群-661816585-8b5cf6?logo=tencentqq)](https://qm.qq.com/q/creatememori)
+[![QQ](https://img.shields.io/badge/QQ群-661816585-8b5cf6?logo=tencentqq)](https://qm.qq.com/q/tKu1lR8oPm)
 [![爱发电](https://img.shields.io/badge/爱发电-支持作者-ff69b4.svg)](https://ifdian.net/a/creatememori)
 
 🖥️ [**在线预览**](https://tv-eosin-five.vercel.app/)  

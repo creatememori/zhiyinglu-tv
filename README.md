@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./public/logo-bai.png" width="120" height="107" alt="知影录 Logo" />
+<img src="./public/logo.png" width="120" height="107" alt="知影录 Logo" />
 
 # 知影录 • Tv
 

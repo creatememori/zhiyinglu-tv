@@ -1,0 +1,19 @@
+{
+  "name": "zhiyinglu-tv",
+  "private": true,
+  "type": "module",
+  "description": "知影录•Tv — 纯前端影视聚合 SPA，多源 AppleCMS 聚合、ArtPlayer 播放、云解析、电视直播，PWA 离线壳",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test --test-concurrency=2"
+  },
+  "dependencies": {
+    "artplayer": "^5.3.0",
+    "hls.js": "^1.5.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

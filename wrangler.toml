@@ -1,0 +1,11 @@
+name = "zhiyinglu-tv-api"
+main = "worker/index.js"
+compatibility_date = "2026-10-25"
+workers_dev = true
+
+# 如需把独立 Worker 绑定到自己的站点域名，请取消注释并替换为真实域名：
+# [[routes]]
+# pattern = "your-domain.example/api/*"
+# zone_name = "your-domain.example"
+
+# 自定义数据源域名可通过 Worker 环境变量 SOURCE_HOSTS 添加，多个域名以英文逗号分隔。

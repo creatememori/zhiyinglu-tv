@@ -1,0 +1,14 @@
+{
+  "name": "知影录•Tv Creatememori",
+  "short_name": "知影录•Tv",
+  "description": "纯前端影视聚合：多源搜索、即点即播、电视直播",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "./logo-bai.png", "sizes": "1327x1186", "type": "image/png", "purpose": "any" }
+  ]
+}

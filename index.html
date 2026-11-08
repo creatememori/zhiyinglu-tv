@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN" data-accent="sunset">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <!-- no-referrer：海报图与解析 iframe 防防盗链拦截 -->
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#030304">
+  <meta name="color-scheme" content="dark">
+  <!-- PWA：离线应用壳 + 可安装（sw.js 仅在生产构建注册） -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>知影录•Tv</title>
+  <link rel="icon" href="./logo-bai.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./logo-bai.png">
+  <!-- 封面镜像预连接：直连 + weserv/wsrv 图片 CDN，首屏封面加速 -->
+  <link rel="preconnect" href="https://images.weserv.nl">
+  <link rel="preconnect" href="https://wsrv.nl">
+  <link rel="preconnect" href="https://img.doubanio.cmliussss.net">
+  <!-- 字体 CSS 非阻塞加载（filamentgroup 的 media 切换技巧）。
+       缓慢或不可达时会直接拖住首屏。系统字体栈先行渲染，字体就绪后自动替换。 -->
+  <style>/* 首屏防白闪 */
+    html,body{background:#000;color:#f5f5f7;margin:0}
+    #boot{position:fixed;inset:0;display:grid;place-items:center;font:600 14px/1.8 system-ui;color:#8e8e99;background:#030304}
+    #boot .boot-logo{width:110px;height:98px;background:url(/logo-bai.png) center/contain no-repeat;margin:0 auto 20px;animation:bootFloat 2.2s ease-in-out infinite;position:relative;filter:drop-shadow(0 10px 24px rgba(124,58,237,.35))}
+    #boot .boot-logo::after{content:'';position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(139,92,246,.4);animation:bootRing 2.2s ease-out infinite}
+    #boot i{width:30px;height:30px;border-radius:50%;border:3px solid rgba(255,255,255,.08);border-top-color:#8b5cf6;animation:spin 1s linear infinite;display:block;margin:0 auto 10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes bootFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.045)}}
+    @keyframes bootRing{0%{opacity:0;transform:scale(.8)}35%{opacity:.8}100%{opacity:0;transform:scale(1.25)}}
+  </style>
+</head>
+<body>
+  <div id="boot"><div><div class="boot-logo"></div><i></i>正在启动…</div></div>
+  <div id="app"></div>
+  <noscript><div style="padding:48px;text-align:center">需要启用 JavaScript 才能使用</div></noscript>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

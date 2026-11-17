@@ -1,5 +1,5 @@
 import { parseQS } from './utils.js';
-import { clearActs } from '../ui/ui.js';
+import { clearActs } from '../ui/index.js';
 
 const routes = new Map();
 let cleanup = null;

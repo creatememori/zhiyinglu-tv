@@ -1,6 +1,6 @@
 import { esc, PF, posterCandidates } from '../core/utils.js';
 import { buildPosterChain } from '../api/posters.js';
-import { recallPoster } from '../core/postermemo.js';
+import { recallPoster } from '../core/poster-memo.js';
 
 /* ---------- 线性图标集（24×24 stroke） ---------- */
 const I = {

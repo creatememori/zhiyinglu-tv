@@ -4,21 +4,70 @@ import { aggregateDetail, sourceScore, extractFromSharePage } from '../api/cms.j
 import { createPlayer, swapUrl, probeUrl, looksLikePage, destroyHls, typeOf, quickProbe } from '../player/player.js';
 import { createVideoBar } from '../player/video-bar.js';
 import { detectRelay, relayStreamUrl } from '../api/adapters.js';
-import { pingJiexi, jxUrl } from '../api/parsers.js';
+import { pingJiexi, jxUrl, probeJiexiSources } from '../api/parsers.js';
+import { rankSources, recordLoad, recordFailure, proxyOrigin, buildProxyUrl, isTrustedProxyMessage } from '../api/resolver.js';
 import { progressGet, progressSet, addHistory, skipGet, skipSet } from '../core/db.js';
-import { U, svg, empty, onAct } from '../ui/ui.js';
+import { U, svg, empty, onAct } from '../ui/index.js';
 import { esc, normalizeTitle, epNum, isVipUrl, isPageUrl, fmtDur, PF, hashId, posterCandidates, epDisplayOrder, epWindowSize } from '../core/utils.js';
-import { probeLines, recallPrecheck, rememberPrecheck, precheckKey, rankPlays, sameCdn } from '../api/lineprobe.js';
+import { probeLines, recallPrecheck, rememberPrecheck, precheckKey, rankPlays, sameCdn } from '../api/line-probe.js';
 
 /* ============ 云解析悬浮面板（播放页 & 解析页复用） ============ */
+// 2026/野木当前不可嵌入：前者 Cloudflare 403 + X-Frame-Options，后者已变社区首页。
+// 并发预检仍会显示它们的状态，但自动尝试不把已确认死的源当作首选项。
+const DEAD_JX = new Set(['jx202617', 'yemy']);
+const JX_ORDER = ['789jx', 'bdjx', 'lxyy', 'yparse', 'txnp', 'aibox', 'xmflv'];
+
 function openParsePanel(targetUrl, preferId) {
-  const jxs = state.settings.jiexiSources;
-  let selId = jxs.find((j) => j.id === preferId)?.id || jxs[0]?.id;
+  const all = (state.settings.jiexiSources || []).filter((j) => j && j.url);
+  const pool = all.filter((j) => !DEAD_JX.has(j.id));
+  const usable = pool.length ? pool : all;
+  if (!usable.length) return null;
+  const preferred = JX_ORDER.map((id) => usable.find((j) => j.id === id)).find(Boolean);
+  let selId = usable.find((j) => j.id === preferId)?.id || preferred?.id || usable[0].id;
   const hostOf = (u) => { try { return new URL(u).hostname; } catch { return u; } };
+
+  let auto = true;
+  let userPicked = false;
+  let probe = null;
+  let loadSeq = 0;
+  let loadStartedAt = 0;
+  let currentProxy = false;
+  let timer = 0;
+  let healthSummary = '';
+  const tried = new Set([selId]);
+  const proxyBase = proxyOrigin();
+  const proxyTried = new Set();
+  const byId = (id) => usable.find((j) => j.id === id);
+
+  // 预连接只对前两路最可能的源做，成本极低，能省掉首次 DNS/TLS 的 100–400ms。
+  const preconnected = new Set();
+  const preconnect = (list) => {
+    if (!list?.length || typeof document === 'undefined') return;
+    list.slice(0, 2).forEach((j) => {
+      try {
+        const host = new URL(j.url).origin;
+        if (!host || preconnected.has(host)) return;
+        preconnected.add(host);
+        const link = document.createElement('link');
+        link.rel = 'preconnect';
+        link.href = host;
+        link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+      } catch { /* ignore malformed source */ }
+    });
+  };
+
   const m = U.modal(`<div class="pane">
     <div class="pane-head">
       <div class="pane-title">${svg('bolt', 'hot')} 云解析播放 · <span class="muted">${esc(hostOf(targetUrl))}</span>
-        <div class="chips-row" style="margin-top:8px">${jxs.map((j) => `<button class="chip ${j.id === selId ? 'on' : ''}" data-jx="${j.id}">${esc(j.name)}</button>`).join('')}</div>
+        <div class="chips-row" style="margin-top:8px">${usable.map((j) => `<button class="chip ${j.id === selId ? 'on' : ''}" data-jx="${j.id}">${esc(j.name)}</button>`).join('')}</div>
+        <div class="jx-meta">
+          <span class="jx-status" id="jx-status" data-tone="run">读取健康清单 · ${usable.length} 路解析…</span>
+          <span class="jx-tools">
+            <button class="btn xs ghost" id="jx-auto" aria-pressed="true">自动尝试：开</button>
+            <button class="btn xs ghost" id="jx-next">${svg('chevR')} 下一路</button>
+          </span>
+        </div>
       </div>
       <div class="pane-btns">
         <button class="btn xs ghost" id="jx-open">${svg('external')} 新窗口</button>
@@ -27,18 +76,224 @@ function openParsePanel(targetUrl, preferId) {
       </div>
     </div>
     <iframe id="jx-frame" class="parse-frame" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe></div>`, { full: true, pin: true });
+
   const frame = m.el.querySelector('#jx-frame');
-  const load = () => { frame.src = jxUrl(jxs.find((j) => j.id === selId) || jxs[0], targetUrl); };
-  load();
+  const statusEl = m.el.querySelector('#jx-status');
+  const autoBtn = m.el.querySelector('#jx-auto');
+  const nextBtn = m.el.querySelector('#jx-next');
+  const chips = [...m.el.querySelectorAll('[data-jx]')];
+
+  const setStatus = (text, tone = 'run') => {
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.dataset.tone = tone;
+  };
+  const stateOf = (j) => j?._probe?.state || (j?._probe?.ok ? 'ok' : 'unknown');
+  const rankOf = (j) => ({ ok: 0, warn: 1, unknown: 2, bad: 3 }[stateOf(j)] ?? 2);
+  const sortPool = (list) => rankSources(list, { target: targetUrl, order: JX_ORDER });
+  const paintChips = () => {
+    const probed = new Map((probe || []).map((j) => [j.id, j]));
+    chips.forEach((c) => {
+      const j = probed.get(c.dataset.jx) || byId(c.dataset.jx);
+      const st = stateOf(j);
+      c.classList.toggle('on', c.dataset.jx === selId);
+      c.classList.toggle('jx-ok', st === 'ok');
+      c.classList.toggle('jx-warn', st === 'warn');
+      c.classList.toggle('jx-unknown', st === 'unknown');
+      c.classList.toggle('jx-bad', st === 'bad');
+      if (j?._probe) {
+        const why = j._probe.reason && j._probe.reason !== st ? ` · ${j._probe.reason}` : '';
+        c.title = `${j.name} · ${st}${why} · ${j._probe.ms || '?'}ms`;
+      }
+    });
+  };
+  const armTimeout = (seq) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (seq !== loadSeq) return;
+      const j = byId(selId);
+      recordFailure(selId, targetUrl);
+      if (auto && !userPicked) {
+        if (proxyBase && !proxyTried.has(selId)) {
+          setStatus(`${j?.name || '当前线路'} 直连超时，切换兼容代理…`, 'warn');
+          load(selId, { fromAuto: true, useProxy: true });
+          return;
+        }
+        setStatus(`${j?.name || '当前线路'} 载入超时，自动换下一路…`, 'warn');
+        autoNext();
+      } else {
+        setStatus(`${j?.name || '当前线路'} 载入超时，可点「下一路」或刷新`, 'warn');
+      }
+    }, 9000);
+  };
+  const armProxySignal = (seq) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (seq !== loadSeq) return;
+      recordFailure(selId, targetUrl);
+      if (auto && !userPicked) {
+        setStatus('兼容代理未收到播放器信号，自动换下一路…', 'warn');
+        autoNext();
+      } else {
+        setStatus('兼容代理未收到播放器信号，可点「下一路」', 'warn');
+      }
+    }, 7000);
+  };
+  const load = (id, { fromAuto = false, useProxy = false } = {}) => {
+    const j = byId(id) || usable[0];
+    if (!j) return;
+    selId = j.id;
+    tried.add(j.id);
+    if (useProxy) proxyTried.add(j.id);
+    const seq = ++loadSeq;
+    clearTimeout(timer);
+    paintChips();
+    loadStartedAt = Date.now();
+    const proxied = useProxy && proxyBase ? buildProxyUrl(j, targetUrl, proxyBase) : '';
+    currentProxy = !!proxied;
+    frame.src = proxied || jxUrl(j, targetUrl);
+    const mode = proxied ? '兼容代理' : '正在载入';
+    setStatus(`${healthSummary ? healthSummary + ' · ' : ''}${fromAuto ? `自动尝试 ${tried.size}/${usable.length}` : mode} ${j.name}`, 'run');
+    armTimeout(seq);
+  };
+  const autoNext = (force = false) => {
+    if (!auto && !force) {
+      setStatus('自动尝试已暂停，可点「下一路」继续', 'warn');
+      return;
+    }
+    const list = sortPool(probe || usable);
+    const nxt = list.find((j) => j.id !== selId && !tried.has(j.id));
+    if (!nxt) {
+      // 直连全部试过：若配置了独立代理域，再用兼容代理兜底一轮；否则结束。
+      const px = proxyBase ? list.find((j) => !proxyTried.has(j.id)) : null;
+      if (px) {
+        setStatus(`直连未成功，尝试兼容代理 ${px.name}…`, 'warn');
+        load(px.id, { fromAuto: true, useProxy: true });
+        return;
+      }
+      auto = false;
+      autoBtn.textContent = '自动尝试：关';
+      autoBtn.setAttribute('aria-pressed', 'false');
+      setStatus('全部线路已尝试仍未成功：可换目标页、试新窗口或刷新源', 'bad');
+      return;
+    }
+    load(nxt.id, { fromAuto: true });
+  };
+  const probeAll = () => {
+    probeJiexiSources(usable, targetUrl).then((list) => {
+      probe = sortPool(list);
+      paintChips();
+      const ok = probe.filter((j) => stateOf(j) === 'ok');
+      const warn = probe.filter((j) => stateOf(j) === 'warn');
+      const unknown = probe.filter((j) => stateOf(j) === 'unknown');
+      const bad = probe.filter((j) => stateOf(j) === 'bad');
+      healthSummary = `${ok.length} 清单可用 · ${warn.length + unknown.length} 未验证${bad.length ? ` · ${bad.length} 不可用` : ''} / ${probe.length} 路`;
+      setStatus(healthSummary, ok.length ? 'ok' : (bad.length === probe.length ? 'bad' : 'warn'));
+      if (!probe.length) return;
+      preconnect(probe);
+      const cur = probe.find((j) => j.id === selId);
+      const best = probe[0];
+      // 只在当前源更差时切换；unknown 不当作“坏”，避免 DNS 误杀。
+      if (auto && !userPicked && cur && best && best.id !== selId && rankOf(cur) > rankOf(best)) {
+        setStatus(`健康清单：${cur.name} ${stateOf(cur)}，自动切到 ${best.name}`, 'warn');
+        load(best.id, { fromAuto: true });
+      }
+    }).catch(() => setStatus('健康清单不可用，按可达性继续尝试', 'warn'));
+  };
+
+  frame.addEventListener('load', () => {
+    clearTimeout(timer);
+    const j = byId(selId);
+    if (!j) return;
+    if (currentProxy) {
+      // 代理页 load 只代表文档到了，真实信号由 monitor postMessage 上报。
+      setStatus(`${healthSummary ? healthSummary + ' · ' : ''}兼容代理 ${j.name} 已载入 · 等待播放器信号…`, 'run');
+      armProxySignal(loadSeq);
+      return;
+    }
+    recordLoad(j.id, targetUrl, { ms: Date.now() - loadStartedAt });
+    setStatus(`${healthSummary ? healthSummary + ' · ' : ''}${j.name} 已载入 · 若无声画请点「下一路」`, 'ok');
+  });
+  frame.addEventListener('error', () => {
+    recordFailure(selId, targetUrl);
+    if (auto && !userPicked) {
+      if (proxyBase && !proxyTried.has(selId)) {
+        setStatus(`${byId(selId)?.name || '当前线路'} 加载失败，切换兼容代理…`, 'warn');
+        load(selId, { fromAuto: true, useProxy: true });
+        return;
+      }
+      setStatus(`${byId(selId)?.name || '当前线路'} 加载失败，自动换下一路…`, 'warn');
+      autoNext();
+    }
+  });
+
+  const onProxyMessage = (e) => {
+    if (!isTrustedProxyMessage(e)) return;
+    if (!currentProxy) return;
+    const d = e.data || {};
+    if (d.phase === 'media' || d.phase === 'ready' || d.phase === 'playing') {
+      clearTimeout(timer);
+      recordLoad(selId, targetUrl, { ms: Date.now() - loadStartedAt });
+      const j = byId(selId);
+      setStatus(`${healthSummary ? healthSummary + ' · ' : ''}兼容代理 ${j?.name || ''} 已捕获播放器`, 'ok');
+    } else if (d.phase === 'error') {
+      recordFailure(selId, targetUrl);
+      if (auto && !userPicked) {
+        setStatus('兼容代理报告播放失败，自动换下一路…', 'warn');
+        autoNext();
+      }
+    }
+  };
+  window.addEventListener('message', onProxyMessage);
+
   m.el.addEventListener('click', (e) => {
     const b = e.target.closest('[data-jx]');
-    if (b) { selId = b.dataset.jx; m.el.querySelectorAll('[data-jx]').forEach((x) => x.classList.toggle('on', x === b)); load(); }
+    if (b) {
+      auto = false;
+      userPicked = true;
+      autoBtn.textContent = '自动尝试：关';
+      autoBtn.setAttribute('aria-pressed', 'false');
+      tried.clear();
+      load(b.dataset.jx);
+    }
   });
+  autoBtn.onclick = () => {
+    auto = !auto;
+    userPicked = false;
+    autoBtn.textContent = `自动尝试：${auto ? '开' : '关'}`;
+    autoBtn.setAttribute('aria-pressed', auto ? 'true' : 'false');
+    if (auto) {
+      tried.clear();
+      tried.add(selId);
+      setStatus('自动尝试已开启，载入失败会自动换下一路', 'run');
+      autoNext(true);
+    } else {
+      clearTimeout(timer);
+      setStatus('自动尝试已暂停', 'warn');
+    }
+  };
+  nextBtn.onclick = () => {
+    tried.add(selId);
+    setStatus('手动换下一路…', 'run');
+    autoNext(true);
+  };
   m.el.querySelector('#jx-open').onclick = () => window.open(frame.src, '_blank');
-  m.el.querySelector('#jx-refresh').onclick = load;
+  m.el.querySelector('#jx-refresh').onclick = () => { tried.clear(); load(selId); probeAll(); };
   m.el.querySelector('#jx-close').onclick = m.close;
+
+  // 先载入默认（实测可嵌入的）源，同时并发预检全部；预检失败再自动切。
+  // 首屏前先给前两路做 preconnect，省掉 DNS/TLS 的往返；预检完成后再补一次。
+  preconnect(rankSources(usable, { target: targetUrl, order: JX_ORDER }));
+  load(selId);
+  probeAll();
   // 解析观看计入历史：同一目标地址复用同一条记录（djb2 哈希作 key），避免重复打开面板刷爆历史列表
   addHistory({ id: 'px:' + hashId(targetUrl), kind: 'parse', srcId: 'parse', vodId: targetUrl, title: hostOf(targetUrl), thumb: '', ep: '云解析', ei: -1, sec: 0 }).catch(() => {});
+  const closeModal = typeof m.close === 'function' ? m.close.bind(m) : () => {};
+  m.close = () => {
+    window.removeEventListener('message', onProxyMessage);
+    clearTimeout(timer);
+    closeModal();
+  };
   return m;
 }
 
@@ -69,7 +324,6 @@ onRoute('play', (view, segs, query) => {
   view.innerHTML = `<div class="page player-page">
     <div class="player-shell">
       <div class="artwrap"><div id="art"></div></div>
-      <div id="play-diagnostic" class="play-diagnostic" hidden></div>
       <aside class="player-side glass">
         <div class="side-head">
           <button class="btn xs ghost" data-href="#/v/${encodeURIComponent(srcId)}/${encodeURIComponent(vodId)}">${svg('arrowL')} 返回</button>
@@ -81,6 +335,7 @@ onRoute('play', (view, segs, query) => {
         <div class="side-sec"><span>剧集 <span class="muted" id="ep-total"></span></span><span><button class="btn xs ghost" id="ep-order" hidden>倒序</button> <button class="btn xs ghost" id="speed-btn">${svg('bolt')} 本集换源测速</button></span></div>
         <div class="ep-grid" id="eps"></div>
       </aside>
+      <div id="play-diagnostic" class="play-diagnostic" hidden></div>
     </div>
     <!-- 播放提示区：不进播放器黑框，独立全宽展示（手机端不再被裁剪） -->
     <div id="play-notice" class="play-notice" hidden></div>
@@ -97,7 +352,14 @@ onRoute('play', (view, segs, query) => {
   const showPlayDiagnostic = (message) => {
     if (!diagnosticBox || !alive) return;
     diagnosticBox.hidden = false;
-    diagnosticBox.innerHTML = `<b>${svg('alert-triangle')} 播放诊断</b><span>${esc(message)}</span><small>不要反复刷新；先确认该线路返回的是媒体文件/播放清单，而不是网页或鉴权错误。</small>`;
+    diagnosticBox.innerHTML = `<div class="pd-card" role="status" aria-live="polite">
+      <div class="pd-head">
+        <span class="pd-ico">${svg('alert-triangle')}</span>
+        <div class="pd-title"><b>播放诊断</b><em>PLAYBACK DIAGNOSTIC</em></div>
+      </div>
+      <p class="pd-msg">${esc(message)}</p>
+      <p class="pd-hint">不要反复刷新；先确认该线路返回的是媒体文件/播放清单，而不是网页或鉴权错误。</p>
+    </div>`;
   };
   const hidePlayDiagnostic = () => { if (diagnosticBox) diagnosticBox.hidden = true; clearTimeout(playWatchdog); playWatchdog = null; };
   const groupsBox = view.querySelector('#groups');
@@ -454,6 +716,7 @@ onRoute('play', (view, segs, query) => {
         return;
       }
       // 最终失败：暂停并提示 
+      hidePlayDiagnostic();
       const noticeBox = view.querySelector('#play-notice');
       if (artbox) artbox.innerHTML = `<div class="empty fade-in" style="min-height:180px"><div class="empty-ico">${svg('alert-triangle')}</div><div class="empty-title">暂无可播放线路</div><div class="empty-sub">请查看下方播放提示中的操作选项</div></div>`;
       if (noticeBox) {
@@ -619,9 +882,6 @@ onRoute('play', (view, segs, query) => {
     try { await fullRescan({ clearPenalty: false, silent: true }); }
     catch { /* fullRescan 内部已处理诊断 */ }
   }
-  /* 测试/调试钩子（无业务影响，供无头浏览器与排障调用） */
-  try { window.__cmRescan = fullRescan; } catch {}
-
   /* 提取播放器创建+绑定（重载后无需重复定义） */
   async function createAndPlay() {
     const currentUrl = cur()?.url || '';

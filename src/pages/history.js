@@ -1,6 +1,6 @@
 import { onRoute } from '../core/router.js';
 import { listHistory, delHistory, clearHistory } from '../core/db.js';
-import { U, svg, posterImg, empty, onAct } from '../ui/ui.js';
+import { U, svg, posterImg, empty, onAct } from '../ui/index.js';
 import { esc, timeAgo, fmtDur } from '../core/utils.js';
 
 onRoute('history', (view) => {

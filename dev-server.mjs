@@ -9,9 +9,9 @@
  */
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { extname, resolve, dirname, join, normalize } from 'node:path';
+import { extname, resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { handleProxy, handleImg, handleStream } from './worker/proxy-core.js';
+import { handleProxy, handleImg, handleStream, handleJxProbe } from './worker/proxy-core.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)));
 const PORT = Number(process.env.PORT || 8787);
@@ -326,7 +326,7 @@ async function handleLiveparse(url, res) {
   }
 }
 
-/** M3U 解析（服务端版；与前端 src/api/liveparser.js 同规则） */
+/** M3U 解析（服务端版；与前端 src/api/live-parser.js 同规则） */
 function parseM3uServer(content, baseUrl) {
   const ATTR_RE = /([a-zA-Z0-9_-]+)="([^"]*)"/g;
   const ATTR_STRIP_RE = /[a-zA-Z0-9_-]+="[^"]*"/g;
@@ -412,10 +412,11 @@ const MIME = {
 const IMPORTMAP = `<script type="importmap">${JSON.stringify({
   imports: {
     artplayer: '/node_modules/artplayer/dist/artplayer.mjs',
-    'hls.js': '/node_modules/hls.js/dist/hls.mjs'
+    'hls.js': '/node_modules/hls.js/dist/hls.mjs',
+    '@colineapp/liquid-glass': '/node_modules/@colineapp/liquid-glass/dist/index.js'
   }
 })}</script>`;
-const CSS_LINK = '<link rel="stylesheet" href="/src/styles/app.css">';
+const CSS_LINK = '<link rel="stylesheet" href="/src/styles/app.css">\n<link rel="stylesheet" href="/src/styles/cinema.css">\n<link rel="stylesheet" href="/node_modules/@colineapp/liquid-glass/dist/styles.css">\n<link rel="stylesheet" href="/src/styles/feedback.css">';
 
 /** 原生 ESM 不支持 CSS import / import.meta.env，做最小转换 */
 function transformJs(src) {
@@ -455,12 +456,16 @@ async function sendWebResponse(webRes, res) {
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
-    const path = normalize(url.pathname);
+    const path = decodeURIComponent(url.pathname);
 
     // ---- 中继（复用 worker/proxy-core，与生产一致）----
     if (path === '/api/proxy' || path === '/api/health') {
       const webReq = new Request(url.href, { method: req.method, headers: req.headers });
       return sendWebResponse(await handleProxy(webReq, {}), res);
+    }
+    if (path === '/api/jxprobe') {
+      const webReq = new Request(url.href, { method: req.method, headers: req.headers });
+      return sendWebResponse(await handleJxProbe(webReq, {}), res);
     }
     if (path === '/api/img') {
       const webReq = new Request(url.href, { method: req.method, headers: req.headers });
@@ -495,6 +500,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/logo.png' || url.pathname === '/logo-bai.png') return serveFile(join(ROOT, 'public/logo-bai.png'), res, {});
     if (url.pathname === '/manifest.webmanifest') return serveFile(join(ROOT, 'public/manifest.webmanifest'), res, {});
     if (url.pathname === '/sw.js') return serveFile(join(ROOT, 'public/sw.js'), res, {});
+    if (url.pathname === '/jx-health.json') return serveFile(join(ROOT, 'public/jx-health.json'), res, {});
 
     if (path.startsWith('/src/')) {
       const filePath = join(ROOT, path);

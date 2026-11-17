@@ -50,7 +50,7 @@ function fmtTime(sec) {
   const p = (n) => String(n).padStart(2, '0');
   return h > 0 ? p(h) + ':' + p(m) + ':' + p(s) : p(m) + ':' + p(s);
 }
-function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+function clampValue(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
 // ======================== 主函数 ========================
 /**
@@ -89,7 +89,7 @@ export function createVideoBar(video, container) {
 
   // ==================== 核心：进度更新 ====================
   function setProgressUI(pct) {
-    const s = (clamp(pct, 0, 1) * 100).toFixed(2) + '%';
+    const s = (clampValue(pct, 0, 1) * 100).toFixed(2) + '%';
     progressEl.style.width = s;
     thumbEl.style.left = s;
   }
@@ -147,7 +147,7 @@ export function createVideoBar(video, container) {
   // ---- 进度条交互：pointerdown 启动拖拽/点击 ----
   function getPct(e) {
     const r = track.getBoundingClientRect();
-    return clamp((e.clientX - r.left) / r.width, 0, 1);
+    return clampValue((e.clientX - r.left) / r.width, 0, 1);
   }
   track.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
@@ -194,8 +194,8 @@ export function createVideoBar(video, container) {
   function onKey(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     const d = video.duration;
-    if (e.key === 'ArrowLeft')  { e.preventDefault(); seekTo(clamp(video.currentTime - 5, 0, d || 0)); }
-    if (e.key === 'ArrowRight') { e.preventDefault(); seekTo(clamp(video.currentTime + 5, 0, d || Infinity)); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); seekTo(clampValue(video.currentTime - 5, 0, d || 0)); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); seekTo(clampValue(video.currentTime + 5, 0, d || Infinity)); }
     if (e.key === ' ') { e.preventDefault(); togglePlay(); }
   }
   video.addEventListener('keydown', onKey);

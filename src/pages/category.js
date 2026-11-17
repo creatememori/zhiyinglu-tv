@@ -5,7 +5,7 @@ import { kvGet } from '../core/db.js';
 import { detectRelay } from '../api/adapters.js';
 import { buildPosterChainRelayed } from '../api/posters.js';
 import { CC_TYPES } from '../api/sources.js';
-import { U, svg, posterCard, skeleton, empty, onAct } from '../ui/ui.js';
+import { U, svg, posterCard, skeleton, empty, onAct } from '../ui/index.js';
 import { esc } from '../core/utils.js';
 
 /* ============================================================

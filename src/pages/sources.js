@@ -3,7 +3,7 @@ import { state, cmsSources, jiexiSources, saveSettings } from '../core/state.js'
 import { checkCms, checkAll, reportHealth } from '../api/cms.js';
 import { pingJiexi } from '../api/parsers.js';
 import { newCmsSource, newJxSource, DEFAULT_SETTINGS, DIRECTORY_SOURCES, DEFAULT_PRESETS, DEFAULT_LIVE_SOURCES } from '../api/sources.js';
-import { U, svg, onAct } from '../ui/ui.js';
+import { U, svg, onAct } from '../ui/index.js';
 import { esc } from '../core/utils.js';
 
 onRoute('sources', (view) => {
@@ -185,7 +185,7 @@ onRoute('sources', (view) => {
     if (!/^https?:\/\//i.test(subUrl)) return U.toast('请输入 http(s) 开头的订阅地址', { type: 'err' });
     m3uStatus.textContent = '正在通过服务端解析订阅…';
     try {
-      const { fetchM3uChannels } = await import('../api/liveparser.js');
+      const { fetchM3uChannels } = await import('../api/live-parser.js');
       const { channels, viaServer } = await fetchM3uChannels(subUrl);
       if (!channels.length) { m3uStatus.textContent = '订阅解析失败：无可用频道（可能地址失效或非 M3U 格式）'; return; }
       // 合并进 liveSources（按 URL 去重）

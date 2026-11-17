@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   b58decode, b58encode, isLunaConfigFile, lunaSourcesToCms, lunaCategoriesToPresets,
   lunaLivesToSources, lunaCacheTimeToSec, toLunaConfigFile, parseSubscriptionText, sanitizeId
-} from '../src/core/lunaconfig.js';
+} from '../src/core/luna-config.js';
 
 test('base58 round-trip preserves UTF-8 text', () => {
   const text = JSON.stringify({ api_site: { bf: { api: 'https://bfzyapi.com/api.php/provide/vod', name: '暴风资源' } } });

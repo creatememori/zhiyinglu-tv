@@ -1,7 +1,7 @@
 import { onRoute } from '../core/router.js';
 import { state, saveSettings } from '../core/state.js';
 import { kvClearPrefix, kvDel, clearHistory, clearPosters, usage } from '../core/db.js';
-import { U, svg, onAct } from '../ui/ui.js';
+import { U, svg, onAct } from '../ui/index.js';
 import { esc, fmtBytes, copyText } from '../core/utils.js';
 import { detectRelay, resetRelayProbe } from '../api/adapters.js';
 import { normalizeImportedSettings } from '../core/config.js';
@@ -10,7 +10,7 @@ import { buildDataExport, applyDataImport } from '../core/data.js';
 import {
   isLunaConfigFile, lunaSourcesToCms, lunaCategoriesToPresets, lunaLivesToSources,
   lunaCacheTimeToSec, toLunaConfigFile, b58Export, parseSubscriptionText
-} from '../core/lunaconfig.js';
+} from '../core/luna-config.js';
 
 onRoute('settings', (view) => {
   const s = () => state.settings;

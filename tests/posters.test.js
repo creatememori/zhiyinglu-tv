@@ -59,11 +59,13 @@ test('posterImageSrc: douban images prefer public CDN mirror (relay stays in cha
   assert.equal(posterImageSrc('bangumi', 'https://lain.bgm.tv/pic/cover/l/1.jpg'), 'https://lain.bgm.tv/pic/cover/l/1.jpg');
 });
 
-test('buildPosterChain: own poster first, then pool, unique, weserv tail', () => {
+test('buildPosterChain: own poster first, then mirrors, then pool, unique', () => {
   const chain = buildPosterChain('http://a.com/p.jpg', ['https://b.com/p.jpg', 'https://a.com/p.jpg', 'https://c.com/p.jpg']);
   assert.equal(chain[0], 'https://a.com/p.jpg');
-  assert.equal(chain[1], 'https://b.com/p.jpg');
-  assert.equal(chain[2], 'https://c.com/p.jpg');
+  assert.ok(chain[1].includes('images.weserv.nl'));
+  assert.ok(chain[2].includes('wsrv.nl'));
+  assert.equal(chain[3], 'https://b.com/p.jpg');
+  assert.equal(chain[4], 'https://c.com/p.jpg');
   assert.equal(new Set(chain).size, chain.length);
   assert.ok(chain.some((u) => u.includes('images.weserv.nl')));
 });
@@ -86,16 +88,16 @@ test('relay URL builders point at same-origin endpoints', () => {
   assert.ok(relayApi('https://x/api').includes(encodeURIComponent('https://x/api')));
 });
 
-test('buildPosterChainRelayed interleaves /api/img relay candidates only when relay is up', () => {
+test('buildPosterChainRelayed interleaves /api/img relay candidates when relay is up', () => {
   const plain = buildPosterChainRelayed('https://a.com/p.jpg', ['https://b.com/q.jpg'], false);
-  assert.equal(plain.length, 3); // 原图 + 跨源池 + weserv（无反代介入）
+  assert.equal(plain.length, 4); // 原图 + 两个镜像 + 跨源池
   assert.ok(!plain.some((u) => u.includes('/api/img')));
 
   const rel = buildPosterChainRelayed('https://a.com/p.jpg', ['https://b.com/q.jpg'], true);
   assert.equal(rel[0], 'https://a.com/p.jpg');
   assert.ok(rel[1].includes('/api/img?url='));
-  assert.equal(rel[2], 'https://b.com/q.jpg');
-  assert.ok(rel[3].includes('/api/img?url='));
+  assert.ok(rel.includes('https://b.com/q.jpg'));
+  assert.ok(rel.some((u) => u.includes('/api/img?url=') && u.includes(encodeURIComponent('https://b.com/q.jpg'))));
   assert.ok(rel.length <= 10);
   const weserv = rel.filter((u) => u.includes('images.weserv.nl'));
   assert.equal(weserv.length, 1); // weserv 不参与反代包装

@@ -3,7 +3,7 @@ import { detectRelay, proxies, viaProxy, relayEndpoint, relayImageBase } from '.
 import { cacheGet, cacheSet } from '../core/db.js';
 import { state } from '../core/state.js';
 import { getDetailCms } from './cms.js';
-import { rememberPoster } from '../core/postermemo.js';
+import { rememberPoster } from '../core/poster-memo.js';
 
 /* ============================================================
    影视封面聚合 ：

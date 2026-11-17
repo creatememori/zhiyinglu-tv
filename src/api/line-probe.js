@@ -20,13 +20,13 @@ const PRECHECK_TTL = 5 * 60e3;
 const POOL = 6;
 let busy = 0;
 const waitQueue = [];
-function acquire() {
+function acquireProbeSlot() {
   return new Promise((res) => {
     if (busy < POOL) { busy++; res(); }
     else waitQueue.push(res);
   });
 }
-function release() {
+function releaseProbeSlot() {
   const next = waitQueue.shift();
   if (next) next(); else busy--;
 }
@@ -62,10 +62,10 @@ export async function probeLines(lines = [], { concurrency = 6, timeout = 5000 }
   const worker = async () => {
     while (cursor < uniq.length) {
       const url = uniq[cursor++];
-      await acquire();
+      await acquireProbeSlot();
       try {
         map.set(url, await probeLine(url, { timeout }));
-      } finally { release(); }
+      } finally { releaseProbeSlot(); }
     }
   };
   await Promise.all(Array.from({ length: poolSize }, worker));

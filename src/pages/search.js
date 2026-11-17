@@ -3,7 +3,7 @@ import { state, saveSettings } from '../core/state.js';
 import { multiSearch } from '../api/cms.js';
 import { detectRelay } from '../api/adapters.js';
 import { buildPosterChainRelayed } from '../api/posters.js';
-import { U, svg, posterCard, skeleton, empty, onAct } from '../ui/ui.js';
+import { U, svg, posterCard, skeleton, empty, onAct } from '../ui/index.js';
 import { esc, debounce } from '../core/utils.js';
 
 onRoute('search', (view, _segs, query) => {

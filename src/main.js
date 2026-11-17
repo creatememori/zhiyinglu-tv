@@ -1,7 +1,13 @@
 import './styles/app.css';
+import './styles/cinema.css';
+import '@colineapp/liquid-glass/styles.css';
+import './styles/feedback.css';
 import { loadState, state, applyTheme, saveSettings, subscribe } from './core/state.js';
 import { boot } from './core/router.js';
-import { U, svg, modal } from './ui/ui.js';
+import { U, svg, modal } from './ui/index.js';
+import { initCinema } from './effects/cinema.js';
+import { initFeedback } from './effects/feedback.js';
+import { refreshDockTabs } from './effects/liquid-dock.js';
 // 注册全部页面路由（副作用导入）
 import './pages/home.js';
 import './pages/search.js';
@@ -34,16 +40,26 @@ async function mountShell() {
           <a class="nav-a" data-href="#/sources">${svg('radar')} 数据源<span class="nav-warn" id="nav-warn" hidden></span></a>
           <a class="nav-a" data-href="#/settings">${svg('gear')} 设置</a>
         </nav>
+        <div class="top-tc" id="tc" aria-hidden="true">00:00:00:00</div>
         <button class="search-mini" data-href="#/search">${svg('search')}<span class="muted">搜索</span><kbd>⌘K</kbd></button>
         <!-- 移动端顶栏快捷图标（≤680px 显示） -->
         <div class="top-icos">
           <a class="top-ico" data-href="#/sources" title="数据源">${svg('radar')}<span class="nav-warn top-warn" id="nav-warn-m" hidden></span></a>
           <a class="top-ico" data-href="#/settings" title="设置">${svg('gear')}</a>
         </div>
+        <div class="film-progress" aria-hidden="true"><i></i></div>
       </div>
     </header>
     <main id="view"></main>
-    <nav class="dock glass liquid">${[['#/', 'home', '首页'], ['#/search', 'search', '搜索'], ['#/cat', 'grid', '分类'], ['#/parse', 'bolt', '解析'], ['#/history', 'clock', '历史']].map(([h, i, n]) => `<a class="dock-a" data-href="${h}">${svg(i)}<span>${n}</span></a>`).join('')}</nav>`;
+    <footer class="credits" aria-label="片尾">
+      <div class="credits-mark">知影录</div>
+      <div class="credits-line"><span>FIN</span><i></i><span>知影录 · TV</span><i></i><span>All sources aggregated</span></div>
+      <div class="credits-marquee" aria-hidden="true"><div class="credits-track"><span>THANKS FOR WATCHING · 感谢观影 · 点击海报回到放映厅 · SOURCES AGGREGATED · 本站仅聚合公开接口 · NO MEDIA HOSTED HERE ·</span><span>THANKS FOR WATCHING · 感谢观影 · 点击海报回到放映厅 · SOURCES AGGREGATED · 本站仅聚合公开接口 · NO MEDIA HOSTED HERE ·</span></div></div>
+      <p class="credits-note">数据与播放均来自第三方公开接口 · 本站不存储任何影片文件</p>
+    </footer>
+    <div class="dock-anchor">
+      <nav class="dock" role="tablist" aria-label="主导航">${[['#/', 'home', '首页'], ['#/search', 'search', '搜索'], ['#/cat', 'grid', '分类'], ['#/parse', 'bolt', '解析'], ['#/history', 'clock', '历史']].map(([h, i, n]) => `<a class="dock-a" role="tab" aria-selected="false" data-href="${h}">${svg(i)}<span class="liquid-glass-tabs-label" data-text="${n}"><span>${n}</span></span></a>`).join('')}</nav>
+    </div>`;
 
   U.initGlobals();
 
@@ -67,8 +83,17 @@ async function mountShell() {
 
   // 导航激活态
   const paintNav = () => {
-    const seg = (location.hash.replace(/^#/, '').split('/')[0]) || 'home';
-    document.querySelectorAll('.nav-a, .dock-a').forEach((a) => a.classList.toggle('on', a.dataset.href === '#' + seg));
+    const raw = location.hash.replace(/^#\/?/, '').split('/')[0].split('?')[0];
+    const seg = raw || 'home';
+    document.body.dataset.route = seg === 'v' ? 'detail' : seg;
+    const href = seg === 'home' ? '#/' : '#/' + seg;
+    document.querySelectorAll('.nav-a').forEach((a) => a.classList.toggle('on', a.dataset.href === href));
+    document.querySelectorAll('.dock-a').forEach((a) => {
+      const on = a.dataset.href === href;
+      a.classList.toggle('on', on);
+      a.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    refreshDockTabs();
   };
   window.addEventListener('hashchange', paintNav);
   paintNav();
@@ -98,7 +123,9 @@ async function mountShell() {
 
 loadState().then(() => {
   applyTheme(); mountShell();
-  
+  initCinema();
+  initFeedback();
+
 //全局交互动效（光标光晕/卡片倾斜/磁吸/滚动渐入）
   import('./effects/interactions.js').then((m) => m.initInteractions()).catch(() => {});
   // 顶栏滚动加深

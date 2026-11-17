@@ -8,14 +8,14 @@ import assert from 'node:assert/strict';
  * 的实际加载过程。main.js 仅含模板字符串与既有导入，语法已另行校验。
  */
 const MODULES = [
-  '../src/ui/ui.js',
+  '../src/ui/index.js',
   '../src/core/utils.js',
   '../src/core/router.js',
   '../src/core/db.js',
   '../src/core/config.js',
   '../src/core/state.js',
   '../src/core/data.js',
-  '../src/core/lunaconfig.js',
+  '../src/core/luna-config.js',
   '../src/api/sources.js',
   '../src/api/adapters.js',
   '../src/api/parsers.js',

@@ -2,7 +2,7 @@ import { state, saveHealth } from '../core/state.js';
 import { cacheSet, cacheGet, kvGet, kvSet } from '../core/db.js';
 import { httpFetch, httpJsonp, proxies, viaProxy, detectRelay, relayEndpoint } from './adapters.js';
 import { normalizeTitle, toHttps } from '../core/utils.js';
-import { rememberPoster } from '../core/postermemo.js';
+import { rememberPoster } from '../core/poster-memo.js';
 
 /* ============================================================
    传输策略：每个"源×请求类型"记住上次成功的传输方式（直连/JSONP/
@@ -16,7 +16,7 @@ const trSet = (s, t, m) => tr.set(s.id + ':' + t, m);
    不参与健康度判定，也不阻塞搜索页对所有源的正常检索。 */
 const searchDown = new Map();
 
-function norm(res) {
+function normalizeResponse(res) {
   if (!res) throw new Error('空响应');
   const candidates = [
     res.list,
@@ -56,8 +56,8 @@ function norm(res) {
 /* JSON/JSONP 整形（兼容裸对象、伪 JSONP 包裹、var 声明） */
 function shapeJson(text) {
   const t = (text || '').trim(); if (!t) throw new Error('空响应');
-  try { return norm(JSON.parse(t)); } catch {}
-  const m = t.match(/\{[\s\S]*\}/); if (m) { try { return norm(JSON.parse(m[0])); } catch {} }
+  try { return normalizeResponse(JSON.parse(t)); } catch {}
+  const m = t.match(/\{[\s\S]*\}/); if (m) { try { return normalizeResponse(JSON.parse(m[0])); } catch {} }
   throw new Error('JSON 解析失败');
 }
 
@@ -169,7 +169,7 @@ async function vodRequest(src, type, q = {}, opt = {}) {
       else if (mode === 'fetch') text = await withRetry(() => httpFetch(url, { timeout: tmo(9000), signal: opt.signal }));
       else if (mode === 'jsonp') {
         const payload = await withRetry(() => httpJsonp(url, { timeout: tmo(6000) }));
-        const r = norm(payload);
+        const r = normalizeResponse(payload);
         if (r.list.length) { trSet(src, type, mode); return r; }
         throw new Error('该接口无可展示数据');
       } else if (mode.startsWith('proxy')) {

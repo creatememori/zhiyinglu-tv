@@ -1,7 +1,7 @@
 import { onRoute } from '../core/router.js';
 import { state } from '../core/state.js';
 import { createPlayer, swapUrl, destroyHls, typeOf } from '../player/player.js';
-import { U, svg, empty } from '../ui/ui.js';
+import { U, svg, empty } from '../ui/index.js';
 import { esc } from '../core/utils.js';
 
 /* ============================ 电视直播 ============================
@@ -17,7 +17,6 @@ onRoute('live', (view, _segs, query) => {
   view.innerHTML = `<div class="page">
     <div class="player-shell">
       <div class="artwrap"><div id="art"></div></div>
-      <div id="play-diagnostic" class="play-diagnostic" hidden></div>
       <aside class="player-side glass">
         <div class="side-head">
           <button class="btn xs ghost" data-href="#/sources">${svg('arrowL')} 返回</button>
@@ -27,6 +26,7 @@ onRoute('live', (view, _segs, query) => {
         <div class="side-sec"><span>直播源 <span class="muted" id="live-count"></span></span><span class="muted">不写观看记录</span></div>
         <div id="live-list" style="display:grid;gap:10px"></div>
       </aside>
+      <div id="play-diagnostic" class="play-diagnostic" hidden></div>
     </div>
   </div>`;
 
@@ -34,7 +34,14 @@ onRoute('live', (view, _segs, query) => {
   const diag = view.querySelector('#play-diagnostic');
   const titleEl = view.querySelector('#live-title');
   const listBox = view.querySelector('#live-list');
-  const showDiag = (msg) => { diag.hidden = false; diag.innerHTML = `<b>${svg('alert-triangle')} 直播诊断</b><span>${esc(msg)}</span><small>直播流对时效与跨域更敏感：失败多为源站下线或格式不受支持，换一路试试。</small>`; };
+  const showDiag = (msg) => { diag.hidden = false; diag.innerHTML = `<div class="pd-card" role="status" aria-live="polite">
+    <div class="pd-head">
+      <span class="pd-ico">${svg('alert-triangle')}</span>
+      <div class="pd-title"><b>直播诊断</b><em>LIVE STREAM DIAGNOSTIC</em></div>
+    </div>
+    <p class="pd-msg">${esc(msg)}</p>
+    <p class="pd-hint">直播流对时效与跨域更敏感：失败多为源站下线或格式不受支持，换一路试试。</p>
+  </div>`; };
   const hideDiag = () => { diag.hidden = true; };
 
   function renderList() {

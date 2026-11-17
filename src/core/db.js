@@ -2,7 +2,7 @@ const DB_NAME = 'creatememori-tv', DB_VER = 1;
 let dbp = null, broken = false;
 const mem = new Map();
 
-function open() {
+function openDatabase() {
   if (dbp) return dbp;
   dbp = new Promise((res) => {
     try {
@@ -26,19 +26,19 @@ const lsJ = (k) => { try { const v = localStorage.getItem('gv:' + k); return v ?
 const lsS = (k, v) => { mem.set(k, v); try { localStorage.setItem('gv:' + k, JSON.stringify(v)); } catch {} };
 
 export async function kvSet(k, v) {
-  try { const d = await open(); if (!d) return lsS(k, v); await prom(d.transaction('kv', 'readwrite').objectStore('kv').put({ k, v })); }
+  try { const d = await openDatabase(); if (!d) return lsS(k, v); await prom(d.transaction('kv', 'readwrite').objectStore('kv').put({ k, v })); }
   catch { lsS(k, v); }
 }
 export async function kvGet(k) {
-  try { const d = await open(); if (!d) return lsJ(k); const r = await prom(d.transaction('kv').objectStore('kv').get(k)); return r ? r.v : undefined; }
+  try { const d = await openDatabase(); if (!d) return lsJ(k); const r = await prom(d.transaction('kv').objectStore('kv').get(k)); return r ? r.v : undefined; }
   catch { return lsJ(k); }
 }
 export async function kvDel(k) {
-  try { const d = await open(); if (d) await prom(d.transaction('kv', 'readwrite').objectStore('kv').delete(k)); } catch { mem.delete(k); }
+  try { const d = await openDatabase(); if (d) await prom(d.transaction('kv', 'readwrite').objectStore('kv').delete(k)); } catch { mem.delete(k); }
 }
 /** 按前缀清理（清空接口缓存使用） */
 export async function kvClearPrefix(prefix) {
-  const d = await open();
+  const d = await openDatabase();
   if (!d) { for (const k of [...mem.keys()]) if (k.startsWith(prefix)) mem.delete(k); return; }
   const store = d.transaction('kv', 'readwrite').objectStore('kv');
   await new Promise((res) => { const c = store.openCursor(); c.onsuccess = () => { const cur = c.result; if (!cur) return res(); if (String(cur.value.k).startsWith(prefix)) cur.delete(); cur.continue(); }; c.onerror = res; });
@@ -62,7 +62,7 @@ export const skipDel = (key) => kvDel('SK:' + key);
 
 /* 按前缀枚举 kv 条目（数据导出用：进度 / 跳过配置全量收集） */
 export async function listPrefixed(prefix) {
-  const d = await open();
+  const d = await openDatabase();
   const out = [];
   if (!d) {
     for (const [k, v] of mem.entries()) if (String(k).startsWith(prefix)) out.push({ k, v });
@@ -89,7 +89,7 @@ export async function listPrefixed(prefix) {
    索引游标定位最旧条目删除（游标顺序即索引升序，前 N 条即最旧 N 条）。 */
 export async function addHistory(h) {
   const entry = { ...h, updated: Date.now() };
-  const d = await open();
+  const d = await openDatabase();
   if (!d) { lsS('hist', [entry, ...(lsJ('hist') || []).filter((x) => x.id !== entry.id)].slice(0, 300)); return; }
   const tx = d.transaction('history', 'readwrite');
   const store = tx.objectStore('history');
@@ -110,11 +110,11 @@ export async function addHistory(h) {
   }
 }
 export async function listHistory() {
-  const d = await open(); if (!d) return (lsJ('hist') || []).sort((a, b) => b.updated - a.updated);
+  const d = await openDatabase(); if (!d) return (lsJ('hist') || []).sort((a, b) => b.updated - a.updated);
   return (await prom(d.transaction('history').objectStore('history').getAll())).sort((a, b) => b.updated - a.updated);
 }
-export const delHistory = (id) => open().then((d) => d && prom(d.transaction('history', 'readwrite').objectStore('history').delete(id)));
-export const clearHistory = () => open().then((d) => d && prom(d.transaction('history', 'readwrite').objectStore('history').clear()));
+export const delHistory = (id) => openDatabase().then((d) => d && prom(d.transaction('history', 'readwrite').objectStore('history').delete(id)));
+export const clearHistory = () => openDatabase().then((d) => d && prom(d.transaction('history', 'readwrite').objectStore('history').clear()));
 
 /* 海报 blob 缓存（CORS 允许时生效，否则回退浏览器原生缓存） */
 const urls = new Map();
@@ -122,7 +122,7 @@ export async function posterBlob(url) {
   if (!url) return url;
   if (urls.has(url)) return urls.get(url);
   try {
-    const d = await open(); let b = null;
+    const d = await openDatabase(); let b = null;
     if (d) { const r = await prom(d.transaction('posters').objectStore('posters').get(url)); if (r) b = r.blob; }
     if (!b) { const res = await fetch(url, { mode: 'cors', referrerPolicy: 'no-referrer' }); b = await res.blob(); if (d) await prom(d.transaction('posters', 'readwrite').objectStore('posters').put({ url, blob: b })); }
     const o = URL.createObjectURL(b);
@@ -130,7 +130,7 @@ export async function posterBlob(url) {
     urls.set(url, o); return o;
   } catch { return url; }
 }
-export const clearPosters = () => open().then((d) => d && prom(d.transaction('posters', 'readwrite').objectStore('posters').clear()));
+export const clearPosters = () => openDatabase().then((d) => d && prom(d.transaction('posters', 'readwrite').objectStore('posters').clear()));
 
 /* 健康度快照 / 存储占用 */
 export const healthLoad = () => kvGet('health') || {};

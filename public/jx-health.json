@@ -1,0 +1,62 @@
+{
+  "checkedAt": "2026-11-17T14:00:38.363Z",
+  "ttlMs": 21600000,
+  "target": "https://v.qq.com/x/cover/mzc00200mp8vo9b.html",
+  "note": "纯静态健康清单：由 scripts/jx-health.mjs 生成；unknown 不要当坏源。",
+  "sources": {
+    "jx202617": {
+      "state": "bad",
+      "ms": 3036,
+      "reason": "cloudflare",
+      "score": 0
+    },
+    "lxyy": {
+      "state": "ok",
+      "ms": 2284,
+      "reason": "ok",
+      "score": 3
+    },
+    "bdjx": {
+      "state": "ok",
+      "ms": 1880,
+      "reason": "ok",
+      "score": 3
+    },
+    "789jx": {
+      "state": "ok",
+      "ms": 676,
+      "reason": "ok",
+      "score": 3
+    },
+    "txnp": {
+      "state": "bad",
+      "ms": 2647,
+      "reason": "parse_failed",
+      "score": 0
+    },
+    "aibox": {
+      "state": "unknown",
+      "ms": 2217,
+      "reason": "empty_page",
+      "score": 0
+    },
+    "yemy": {
+      "state": "bad",
+      "ms": 1868,
+      "reason": "ok",
+      "score": 0
+    },
+    "yparse": {
+      "state": "ok",
+      "ms": 1822,
+      "reason": "ok",
+      "score": 3
+    },
+    "xmflv": {
+      "state": "unknown",
+      "ms": 1167,
+      "reason": "empty_page",
+      "score": 0
+    }
+  }
+}

@@ -2,11 +2,11 @@ import { onRoute, goto } from '../core/router.js';
 import { state, saveSettings } from '../core/state.js';
 import { aggregateDetail, getList, sourceScore } from '../api/cms.js';
 import { progressGet, posterBlob } from '../core/db.js';
-import { U, svg, posterCard, posterImg, empty, onAct } from '../ui/ui.js';
+import { U, svg, posterCard, posterImg, empty, onAct } from '../ui/index.js';
 import { buildPosterChainRelayed } from '../api/posters.js';
 import { detectRelay } from '../api/adapters.js';
 import { esc, normalizeTitle, copyText, PF, posterCandidates } from '../core/utils.js';
-import { probeLines, recallPrecheck, rememberPrecheck, precheckKey, rankPlays } from '../api/lineprobe.js';
+import { probeLines, recallPrecheck, rememberPrecheck, precheckKey, rankPlays } from '../api/line-probe.js';
 
 onRoute('v', (view, segs) => {
   const [, srcId, vodId] = segs;

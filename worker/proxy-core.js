@@ -68,6 +68,20 @@ const DEFAULT_IMG_HOSTS = [
   'cmliussss.com'
 ];
 
+/* 解析站预检白名单：只允许内置解析站（可用 JX_HOSTS 追加）。
+   该接口只读取 HTML 状态/头部/可见文本，用于客户端并发选源，不做任意转发。 */
+const DEFAULT_JX_HOSTS = [
+  '202617.xyz',
+  'lxyy.club',
+  'jx.cn',
+  '789jiexi.com',
+  'txnp.cn',
+  'aibox.eu.org',
+  'yemu.xyz',
+  'ik9.cc',
+  'xmflv.com'
+];
+
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
 const MAX_IMG_BYTES = 8 * 1024 * 1024;
 const CACHE_SECONDS = 300;
@@ -118,6 +132,130 @@ function coalesce(key, loader) {
     INFLIGHT.set(key, flight);
   }
   return flight;
+}
+
+/* ============================================================
+   解析站预检（/api/jxprobe）
+   并发探测多个云解析站，返回能否嵌入/是否被 Cloudflare 拦截/是否像解析器，
+   供播放页在打开面板时自动选源。只允许内置解析站域名，禁止任意 URL。
+   ============================================================ */
+function jxAllowedHost(host, env = {}) {
+  const h = String(host || '').toLowerCase().replace(/\.$/, '');
+  if (!h || h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local')) return false;
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(h) || h.includes(':')) return false;
+  const extra = String(env?.JX_HOSTS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+  return [...new Set([...DEFAULT_JX_HOSTS, ...extra])].some((d) => h === d || h.endsWith('.' + d));
+}
+
+function visibleText(html) {
+  return String(html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export async function handleJxProbe(request, env = {}) {
+  const requestUrl = new URL(request.url);
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: {
+      'access-control-allow-origin': '*',
+      'access-control-allow-methods': 'GET, OPTIONS',
+      'access-control-allow-headers': 'content-type',
+      'access-control-max-age': '86400'
+    }});
+  }
+  if (request.method !== 'GET') return responseJson({ error: 'method_not_allowed' }, 405, { allow: 'GET, OPTIONS' });
+
+  const raw = requestUrl.searchParams.get('url');
+  if (!raw) return responseJson({ error: 'missing_url' }, 400);
+  let target;
+  try { target = new URL(raw); } catch { return responseJson({ error: 'invalid_url' }, 400); }
+  if (!['http:', 'https:'].includes(target.protocol) || target.username || target.password) {
+    return responseJson({ error: 'invalid_protocol' }, 400);
+  }
+  target.hash = '';
+  if (!jxAllowedHost(target.hostname, env)) {
+    return responseJson({ error: 'host_not_allowed', host: target.hostname }, 403);
+  }
+
+  const t0 = Date.now();
+  const c = new AbortController();
+  const timer = setTimeout(() => c.abort(), 9000);
+  let upstream;
+  let finalUrl = target.href;
+  try {
+    // 手动跟随重定向：每一跳都校验白名单，避免把预检变成任意 URL/内网探测入口。
+    for (let hop = 0; hop < 4; hop++) {
+      upstream = await fetch(finalUrl, {
+        method: 'GET',
+        redirect: 'manual',
+        signal: c.signal,
+        headers: {
+          accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'accept-language': 'zh-CN,zh;q=0.9,en;q=0.6',
+          'user-agent': BROWSER_UA,
+          referer: 'https://www.qq.com/'
+        }
+      });
+      if (![301, 302, 303, 307, 308].includes(upstream.status)) break;
+      const loc = upstream.headers.get('location') || '';
+      let next;
+      try { next = new URL(loc, finalUrl); } catch { break; }
+      if (!['http:', 'https:'].includes(next.protocol) || !jxAllowedHost(next.hostname, env)) {
+        return responseJson({ ok: false, reason: 'redirect_not_allowed', status: upstream.status, ms: Date.now() - t0, host: next.hostname });
+      }
+      finalUrl = next.href;
+      upstream = null;
+    }
+    if (!upstream) throw new Error('too_many_redirects');
+  } catch (e) {
+    clearTimeout(timer);
+    return responseJson({ ok: false, reason: 'unreachable', ms: Date.now() - t0, error: String(e?.message || '').slice(0, 160) });
+  }
+  const finalHost = (() => { try { return new URL(finalUrl).hostname; } catch { return target.hostname; } })();
+  if (!jxAllowedHost(finalHost, env)) {
+    return responseJson({ ok: false, reason: 'redirect_not_allowed', status: upstream.status, ms: Date.now() - t0, host: finalHost });
+  }
+
+  const xfo = upstream.headers.get('x-frame-options') || '';
+  const csp = upstream.headers.get('content-security-policy') || '';
+  const frameBlocked = /sameorigin|deny/i.test(xfo) ||
+    (/frame-ancestors/i.test(csp) && !/frame-ancestors\s+\*/i.test(csp));
+
+  let body = '';
+  const declared = Number(upstream.headers.get('content-length') || 0);
+  if (!declared || declared <= 1_500_000) {
+    try { body = (await upstream.text()).slice(0, 900_000); } catch { body = ''; }
+  }
+  clearTimeout(timer);
+  const text = visibleText(body);
+  const lower = text.toLowerCase();
+  const rawLower = body.toLowerCase();
+  const cloudflare = upstream.status === 403 || /just a moment|cf-chl|challenge-platform/i.test(body);
+  const failText = /(解析失败|解析错误|解析无效|无法解析|不支持该|视频不存在|地址错误|地址失效|播放失败|not found|invalid url)/i.test(text);
+  const hasParser = /(<video|m3u8|\.mp4|artplayer|dplayer|videojs|<iframe|player)/i.test(rawLower);
+  const homepage = !hasParser && /(首页|最新|排行榜|社区|登录|注册)/.test(text) && text.length > 200;
+  const emptyShell = !hasParser && text.length < 600;
+  const statusOk = upstream.status >= 200 && upstream.status < 400;
+  const ok = statusOk && !frameBlocked && !cloudflare && !failText && !homepage && !emptyShell;
+
+  return responseJson({
+    ok,
+    status: upstream.status,
+    ms: Date.now() - t0,
+    finalUrl: upstream.url,
+    host: finalHost,
+    frameBlocked,
+    cloudflare,
+    failText,
+    homepage,
+    emptyShell,
+    hasParser,
+    reason: !statusOk ? 'http_' + upstream.status : frameBlocked ? 'frame_blocked' : cloudflare ? 'cloudflare' : failText ? 'parse_failed' : homepage ? 'not_parser' : emptyShell ? 'empty_page' : 'ok'
+  }, 200, { 'x-zhiyinglu-build': BUILD_ID });
 }
 
 /**

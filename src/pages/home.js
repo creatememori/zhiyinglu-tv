@@ -5,14 +5,15 @@ import { detectRelay } from '../api/adapters.js';
 import { relayImageUrl } from '../api/posters.js';
 import { buildPosterChainRelayed, coverPoster, posterImageSrc, mirrorCandidates } from '../api/posters.js';
 import { listHistory } from '../core/db.js';
-import { U, svg, posterCard, posterImg, skeleton, empty } from '../ui/ui.js';
+import { U, svg, posterCard, posterImg, skeleton, empty } from '../ui/index.js';
 import { esc, shuffle, timeAgo, PF } from '../core/utils.js';
+import { initFilmstrip } from '../effects/cinema.js';
 import { CC_TYPES } from '../api/sources.js';
 
 onRoute('home', (view) => {
   view.innerHTML = `
     <div class="page home-page">
-      <div class="hero" id="hx">${skeleton(1)}</div>
+      <div class="hero hero-cinema" id="hx">${skeleton(1)}</div>
       <section class="section home-categories" id="home-categories"><div class="sec-head"><h2>${svg('grid', 'hot')} 快速分类</h2><span class="sec-sub">按兴趣开始探索</span></div><div class="home-category-grid">${CC_TYPES.map(([id, name], i) => `<a class="home-category-tile cat-tone-${i}" data-href="#/cat?t=${id}&n=${encodeURIComponent(name)}"><span class="home-category-icon">${[svg('clapperboard'),svg('tv'),svg('mic'),svg('sparkles')][i]}</span><span class="home-category-name">${name}</span><span class="home-category-sub">发现更多${name}</span><span class="home-category-arrow">${svg('chevR')}</span></a>`).join('')}</div></section>
       <section class="section" id="sx-resume"></section>
       <section class="section home-section-hot"><div class="sec-head"><h2>${svg('flame', 'hot')} 热门榜单</h2><span class="sec-sub">全站热度参考</span></div><div id="popular-zone">${skeleton(6)}</div></section>
@@ -22,16 +23,56 @@ onRoute('home', (view) => {
       <section class="section home-discover"><div class="sec-head"><h2>${svg('compass', 'hot')} 发现更多</h2><span class="sec-sub">按影片类型继续浏览</span></div><div class="chips-row home-type-chips">${CC_TYPES.map(([id, name]) => `<a class="chip" data-href="#/cat?t=${id}&n=${encodeURIComponent(name)}">${name} ${svg('chevR')}</a>`).join('')}</div></section>
     </div>`;
 
+  let heroRaf = 0, heroP = 0, heroPaused = false;
   let heroTimer = null, alive = true, merged = [], srcCount = 0;
   let lastSig = '', heroSig = '';          // 渲染去重签名（见 loadFeed）
-  const heroState = { i: 0 };              // 轮播当前停留位置，重绘时保留
+  const heroState = { i: 0, list: null };  // 轮播当前停留位置，重绘时保留
+  const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   //近 2h 判定 down 的源自动暂停本轮聚合（TTL 思路），全部暂停时退回全量
   const allCount = cmsSources().length;
   const srcs = activeSources(cmsSources());
   const pausedCount = allCount - srcs.length;
-  //修复：relayOk 原为 loadFeed 内局部变量，却被同屏的 fill/renderHero/fillPopular
+  //修复：relayOk 原为 loadFeed 内局部变量，却被同屏的 fillGrid/renderHero/fillPopular
   // 引用 → ReferenceError，卡片永不渲染。提升到本路由作用域。
   let relayOk = false;
+
+  /* ---- 胶片廊（热门榜单的新形态）：两种数据源共用同一套卡片语言 ---- */
+  function filmCardHTML({ rank, href, img, title, meta, badge }) {
+    return `<a class="film-card" href="${href}" data-href="${href}" data-spot>
+      <span class="film-rank" aria-hidden="true">${rank}</span>
+      <div class="film-poster">${img}${badge ? `<span class="film-badge">${esc(badge)}</span>` : ''}</div>
+      <div class="film-title">${esc(title || '')}</div>
+      <div class="film-meta">${esc(meta || '')}</div>
+    </a>`;
+  }
+
+  function filmstripHTML(cards, note) {
+    return `<div class="filmstrip" data-filmstrip>
+      <div class="filmstrip-head">
+        <span class="filmstrip-note">${esc(note)}</span>
+        <span class="filmstrip-count">${String(cards.length).padStart(2, '0')} FRAMES</span>
+      </div>
+      <div class="filmstrip-viewport">
+        <div class="filmstrip-track" tabindex="0" role="list" aria-label="热门影片胶片廊，可左右滚动">${cards.join('')}</div>
+        <button type="button" class="filmstrip-arrow prev" data-film-dir="-1" aria-label="向前浏览">${svg('arrowL')}</button>
+        <button type="button" class="filmstrip-arrow next" data-film-dir="1" aria-label="向后浏览">${svg('chevR')}</button>
+      </div>
+    </div>`;
+  }
+
+  function filmFromSource(v, i) {
+    const href = `#/v/${encodeURIComponent(v.srcId)}/${encodeURIComponent(v.vod_id)}`;
+    const img = posterImg(v.vod_pic, {
+      chain: buildPosterChainRelayed(v.vod_pic, v.posterPool, relayOk),
+      smart: { n: v.vod_name, y: v.vod_year, t: v.type_name, s: v.srcId, id: v.vod_id }
+    });
+    const meta = [v.vod_year, v.type_name, v.srcCount > 1 ? `${v.srcCount} 源` : '']
+      .filter(Boolean).join(' · ') || v.vod_remarks || '热门推荐';
+    return filmCardHTML({
+      rank: String(i + 1).padStart(2, '0'),
+      href, img, title: v.vod_name, meta, badge: v.vod_remarks || ''
+    });
+  }
 
   if (!srcs.length) {
     view.querySelector('#hx').innerHTML = `
@@ -122,7 +163,7 @@ onRoute('home', (view) => {
     } catch {}
     recommendOk = false;
     // 豆瓣失败 → 源站随机兜底（原有逻辑）
-    try { fill(zone, buildRecommendations(merged).slice(0, 12), 'recommend'); } catch {}
+    try { fillGrid(zone, buildRecommendations(merged).slice(0, 12), 'recommend'); } catch {}
   }
 
   /* 多源高分榜单（豆瓣周榜思路 + 10 题材聚合）：
@@ -157,10 +198,15 @@ onRoute('home', (view) => {
         //修复：榜单区块取消懒加载（避免视口外不加载），竞速链立即预热
         return `<img decoding="async" referrerpolicy="no-referrer"${race} src="${esc(first)}">`;
       };
-      zone.innerHTML = `<div class="popular-layout">
-        <div class="popular-feature">${ranked[0] ? `<a class="card" data-href="#/search?wd=${encodeURIComponent(ranked[0].title)}"><div class="card-img">${posterImgOf(ranked[0])}</div><div class="card-body"><div class="card-title">${esc(ranked[0].title)}</div><div class="card-meta">豆瓣 ${esc(ranked[0].rating)} 分 · ${esc(ranked[0].types || '')}</div></div></a><div class="popular-feature-caption"><span class="badge hot">高分聚合榜</span><strong>${esc(ranked[0].title)}</strong><span>${esc(ranked[0].rating)} 分 · ${esc(ranked[0].regions || '')} · 点击站内搜索</span></div>` : ''}</div>
-        <div class="popular-ranking">${ranked.slice(1, 7).map((v, i) => `<a class="popular-rank-row" data-href="#/search?wd=${encodeURIComponent(v.title)}" title="站内搜索「${esc(v.title)}」"><span class="popular-rank-num rank-${i + 2}">${String(i + 2).padStart(2, '0')}</span><span class="popular-rank-poster">${posterImgOf(v)}</span><span class="popular-rank-info"><b>${esc(v.title)}</b><small>${esc(v.types || '')} · ${esc(v.regions || '')}</small></span><span class="popular-rank-play">${svg('search')}</span></a>`).join('')}</div>
-      </div>`;
+      zone.innerHTML = filmstripHTML(ranked.map((it, i) => filmCardHTML({
+        rank: String(i + 1).padStart(2, '0'),
+        href: `#/search?wd=${encodeURIComponent(it.title)}`,
+        img: posterImgOf(it),
+        title: it.title,
+        meta: [it.rating ? `豆瓣 ${it.rating} 分` : '', it.types || '', it.regions || ''].filter(Boolean).join(' · '),
+        badge: it.rating ? `${it.rating}` : ''
+      })), '豆瓣一周高分 · 正在热映');
+      initFilmstrip(zone);
       // 更新区块标题提示来源
       const head = zone.closest('.home-section-hot')?.querySelector('.sec-sub');
       if (head) head.textContent = '豆瓣 10 题材高分榜聚合 · 点击站内搜索';
@@ -295,10 +341,10 @@ onRoute('home', (view) => {
       const hSig = heroTop.map((v) => (v.key || '') + (v.vod_id || '')).join(',');
       if (hSig !== heroSig) { heroSig = hSig; renderHero(heroTop, Math.min(heroState.i, Math.max(0, heroTop.length - 1))); }
       const today = merged.slice().sort((a, b) => String(b.vod_time || '').localeCompare(String(a.vod_time || '')));
-      fill(target('#today-zone'), today.slice(0, 18), 'today');
+      fillGrid(target('#today-zone'), today.slice(0, 18), 'today');
       fillPopular(target('#popular-zone'), today.slice().sort((a, b) => (Number(b.vod_hits) || 0) - (Number(a.vod_hits) || 0)).slice(0, 8));
       if (!recommendTaken) loadDoubanRecommend(false);
-      else if (!recommendOk) fill(target('#hot-zone'), buildRecommendations(today).slice(0, 12), 'recommend');
+      else if (!recommendOk) fillGrid(target('#hot-zone'), buildRecommendations(today).slice(0, 12), 'recommend');
     }
 
     const tasks = srcs.map(async (s) => {
@@ -354,7 +400,7 @@ onRoute('home', (view) => {
     target('#popular-zone').innerHTML = empty('flame', '热门榜单暂不可用', '当前没有可验证的影片热度数据');
   }
 
-  function fill(mount, list, mode = 'default') {
+  function fillGrid(mount, list, mode = 'default') {
     if (!mount) return;
     mount.innerHTML = list.length
       ? `<div class="grid home-grid home-grid-${mode}">${list.map((v, k) => posterCard(v, k, { pool: v.posterPool, chain: buildPosterChainRelayed(v.vod_pic, v.posterPool, relayOk) })).join('')}</div>`
@@ -413,40 +459,98 @@ onRoute('home', (view) => {
   function fillPopular(mount, list) {
     if (!mount) return;
     if (mount.dataset.hotboard === '1') return;   //聚合榜已接管，源站热度榜不再覆盖
-    const ranked = list.slice(0, 8);
-    mount.innerHTML = ranked.length ? `<div class="popular-layout">
-      <div class="popular-feature">${ranked[0] ? posterCard(ranked[0], 0, { pool: ranked[0].posterPool, chain: buildPosterChainRelayed(ranked[0].vod_pic, ranked[0].posterPool, relayOk) }) : ''}<div class="popular-feature-caption"><span class="badge hot">今日热映</span><strong>${esc(ranked[0]?.vod_name || '')}</strong><span>热度优选 · 点击查看详情</span></div></div>
-      <div class="popular-ranking">${ranked.slice(1, 7).map((v, i) => `<a class="popular-rank-row" data-href="#/v/${encodeURIComponent(v.srcId)}/${encodeURIComponent(v.vod_id)}"><span class="popular-rank-num rank-${i + 2}">${String(i + 2).padStart(2, '0')}</span><span class="popular-rank-poster">${posterImg(v.vod_pic, { chain: buildPosterChainRelayed(v.vod_pic, v.posterPool, relayOk), smart: { n: v.vod_name, y: v.vod_year, t: v.type_name, s: v.srcId, id: v.vod_id } })}</span><span class="popular-rank-info"><b>${esc(v.vod_name)}</b><small>${esc(v.type_name || '影视')} · ${esc(v.vod_year || v.vod_remarks || '热门推荐')}</small></span><span class="popular-rank-play">${svg('play')}</span></a>`).join('')}</div>
-    </div>` : empty('flame', '热门榜单暂不可用', '获取到影视数据后会自动生成');
+    const ranked = list.filter((v) => v && v.vod_name).slice(0, 8);
+    mount.innerHTML = ranked.length
+      ? filmstripHTML(ranked.map(filmFromSource), '多源热度 · 正在热映')
+      : empty('flame', '热门榜单暂不可用', '获取到影视数据后会自动生成');
+    initFilmstrip(mount);
   }
 
   /* 焦点轮播：合并网里按热度取前6，每个条目自带所属源 srcId */
   function renderHero(list, initialIndex = 0) {
-    clearInterval(heroTimer);
+    cancelAnimationFrame(heroRaf);
     const hx = view.querySelector('#hx');
-    const hero = list.slice().sort((a, b) => (b.vod_hits || 0) - (a.vod_hits || 0)).slice(0, 6);
+    if (!hx) return;
+    const hero = list.filter((v) => v && v.vod_name)
+      .slice().sort((a, b) => (Number(b.vod_hits) || 0) - (Number(a.vod_hits) || 0)).slice(0, 6);
     if (!hero.length) return;
-    let i = initialIndex % hero.length;
-    const paint = () => {
-      heroState.i = i;
-      const v = hero[i];
-      hx.innerHTML = `<div class="hero-bg">${posterImg(v.vod_pic, { cls: 'hero-img', lazy: false, chain: buildPosterChainRelayed(v.vod_pic, v.posterPool, relayOk), smart: { n: v.vod_name, y: v.vod_year, t: v.type_name, s: v.srcId, id: v.vod_id } })}</div>
-        <div class="hero-veil"></div>
-        <div class="hero-info fade-in">
-          <div class="hero-tags">${v.type_name ? `<span class="badge">${esc(v.type_name)}</span>` : ''}${v.vod_remarks ? `<span class="badge hot">${esc(v.vod_remarks)}</span>` : ''}${v.vod_year ? `<span class="badge">${esc(v.vod_year)}</span>` : ''}${v.srcCount > 1 ? `<span class="badge hot">${v.srcCount}源聚合</span>` : ''}</div>
+    heroState.list = hero;
+    const i = ((Number(initialIndex) || 0) % hero.length + hero.length) % hero.length;
+    heroState.i = i;
+    heroP = 0;
+    const v = hero[i];
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const note = String(v.vod_content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 88);
+    const frames = hero.map((it, j) => `<button type="button" class="hero-frame${j === i ? ' on' : ''}" data-hero-index="${j}" aria-label="第 ${j + 1} 部：${esc(it.vod_name)}" aria-pressed="${j === i}">
+      ${posterImg(it.vod_pic, { chain: buildPosterChainRelayed(it.vod_pic, it.posterPool, relayOk), smart: { n: it.vod_name, y: it.vod_year, t: it.type_name, s: it.srcId, id: it.vod_id } })}
+      <span>${pad2(j + 1)}</span>
+    </button>`).join('');
+    hx.innerHTML = `<div class="hero-bg">${posterImg(v.vod_pic, { cls: 'hero-img', lazy: false, chain: buildPosterChainRelayed(v.vod_pic, v.posterPool, relayOk), smart: { n: v.vod_name, y: v.vod_year, t: v.type_name, s: v.srcId, id: v.vod_id } })}</div>
+      <div class="hero-veil"></div>
+      <div class="hero-beam"></div>
+      <div class="hero-inner">
+        <div class="hero-rail" aria-hidden="true"><span class="rail-reel">REEL ${pad2(i + 1)}</span><span class="rail-line"></span><span class="rail-fps">24 FPS</span></div>
+        <div class="hero-info">
+          <div class="hero-kicker">NOW SHOWING <b>正在热映</b></div>
+          <div class="hero-tags">${v.type_name ? `<span class="badge">${esc(v.type_name)}</span>` : ''}${v.vod_remarks ? `<span class="badge hot">${esc(v.vod_remarks)}</span>` : ''}${v.vod_year ? `<span class="badge">${esc(v.vod_year)}</span>` : ''}${v.srcCount > 1 ? `<span class="badge">${v.srcCount} 源聚合</span>` : ''}</div>
           <h1 class="hero-title">${[...esc(v.vod_name)].map((ch, ci) => `<span class="ch" style="--ci:${ci}">${ch}</span>`).join('')}</h1>
+          ${note ? `<p class="hero-note">${esc(note)}</p>` : ''}
           <div class="hero-actions">
             <button class="btn primary lg" data-href="#/play/${encodeURIComponent(v.srcId)}/${encodeURIComponent(v.vod_id)}">${svg('play')} 立即播放</button>
             <button class="btn ghost lg" data-href="#/v/${encodeURIComponent(v.srcId)}/${encodeURIComponent(v.vod_id)}">查看详情</button>
           </div>
         </div>
-        <div class="hero-dots">${hero.map((_, j) => `<button type="button" class="dot ${j === i ? 'on' : ''}" data-hero-index="${j}" aria-label="切换到第 ${j + 1} 部影片"></button>`).join('')}</div>`;
+        <div class="hero-frames" aria-label="影片帧选片">${frames}</div>
+      </div>
+      <div class="hero-foot">
+        <span class="hero-hint">AUTO · 06S</span>
+        <div class="hero-progress" aria-hidden="true"><i></i></div>
+        <span class="hero-count"><b>${pad2(i + 1)}</b> / ${pad2(hero.length)}</span>
+        <div class="hero-nav">
+          <button type="button" class="hero-step" data-hero-step="-1" aria-label="上一部">${svg('chevR')}</button>
+          <button type="button" class="hero-step" data-hero-step="1" aria-label="下一部">${svg('chevR')}</button>
+        </div>
+      </div>`;
+    const frameStrip = hx.querySelector('.hero-frames');
+    const activeFrame = frameStrip?.querySelector('.hero-frame.on');
+    if (frameStrip && activeFrame && frameStrip.scrollWidth > frameStrip.clientWidth + 2) {
+      frameStrip.scrollTo({ left: Math.max(0, activeFrame.offsetLeft - 8), behavior: mqReduce.matches ? 'auto' : 'smooth' });
+    }
+    if (mqReduce.matches) return;
+    let last = performance.now();
+    const bar = hx.querySelector('.hero-progress i');
+    const tick = (now) => {
+      if (!alive || heroState.i !== i) return;
+      const dt = Math.min(now - last, 240);
+      last = now;
+      if (!heroPaused && !document.hidden) {
+        heroP += dt / 6000;
+        if (heroP >= 1) { heroP = 0; renderHero(hero, (i + 1) % hero.length); return; }
+        if (bar) bar.style.transform = `scaleX(${Math.min(1, heroP).toFixed(4)})`;
+      }
+      heroRaf = requestAnimationFrame(tick);
     };
-    paint();
-    heroTimer = setInterval(() => { i = (i + 1) % hero.length; paint(); }, 6000);
+    heroRaf = requestAnimationFrame(tick);
   }
   view.querySelector('#rx')?.addEventListener('click', () => loadDoubanRecommend(true));
-  view.querySelector('#hx')?.addEventListener('click', (e) => { const dot = e.target.closest('[data-hero-index]'); if (dot && merged.length) { const list = merged.slice().sort((a, b) => (Number(b.vod_hits) || 0) - (Number(a.vod_hits) || 0)).slice(0, 6); const n = Number(dot.dataset.heroIndex); if (Number.isInteger(n) && list[n]) { renderHero(list, n); } } });
+  const hxEl = view.querySelector('#hx');
+  hxEl?.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-hero-index], [data-hero-step]');
+    if (!t || !heroState.list?.length) return;
+    e.preventDefault();
+    const len = heroState.list.length;
+    if (t.dataset.heroStep) {
+      const dir = Number(t.dataset.heroStep) || 1;
+      renderHero(heroState.list, (heroState.i + dir + len) % len);
+    } else {
+      const n = Number(t.dataset.heroIndex);
+      if (Number.isInteger(n)) renderHero(heroState.list, n);
+    }
+  });
+  hxEl?.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') heroPaused = true; });
+  hxEl?.addEventListener('pointerleave', () => { heroPaused = false; });
+  hxEl?.addEventListener('focusin', () => { heroPaused = true; });
+  hxEl?.addEventListener('focusout', (e) => { if (!hxEl.contains(e.relatedTarget)) heroPaused = false; });
 
   /* 继续观看 + 收藏横栏 */
   async function buildResume() {
@@ -476,5 +580,5 @@ onRoute('home', (view) => {
         </a>`).join('')}</div>`;
   }
 
-  return () => { alive = false; clearInterval(heroTimer); };
+  return () => { alive = false; clearInterval(heroTimer); cancelAnimationFrame(heroRaf); };
 });

@@ -131,10 +131,12 @@ function initElasticDrag() {
   let dragEl = null, startX = 0, startY = 0, lastX = 0, lastY = 0, velX = 0, velY = 0, dragging = false;
 
   document.addEventListener('pointerdown', (e) => {
-    const el = e.target.closest?.('.chip, .ep, .btn.ghost, .dock-a');
+    const el = e.target.closest?.('.chip, .ep, .btn.ghost');
     if (!el) return;
     // 卡片（.card）已带 3D 倾斜，跳过避免冲突
     if (el.closest('.card')) return;
+    // Dock 的选中态由官方 tabs 管理，避免这里抢 pointer 打断 thumb 拖动
+    if (el.closest('.dock')) return;
     dragEl = el;
     startX = lastX = e.clientX;
     startY = lastY = e.clientY;

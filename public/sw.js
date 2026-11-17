@@ -8,7 +8,7 @@
    部署注意：本文件位于 public/，构建后原样输出到站点根目录；
    改缓存策略时更新缓存前缀，否则旧缓存不会被清理。
    ============================================================ */
-const VERSION = 'zhiyinglu-shell';
+const VERSION = 'zhiyinglu-shell-v3';
 const SHELL_CACHE = VERSION + ':shell';
 const STATIC_CACHE = VERSION + ':static';
 const SHELL = ['./', './index.html', './favicon.svg', './manifest.webmanifest'];
